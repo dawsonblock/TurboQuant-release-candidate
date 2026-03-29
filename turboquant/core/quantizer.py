@@ -56,16 +56,17 @@ def _build_mask(bits: int) -> mx.array:
 _SHIFT_CACHE: dict[int, mx.array] = {}
 _MASK_CACHE: dict[int, mx.array] = {}
 
-
-def _get_shifts(bits: int) -> mx.array:
+def build_caches(bits: int) -> None:
+    """Pre-allocate bit packing masks and shifts."""
     if bits not in _SHIFT_CACHE:
         _SHIFT_CACHE[bits] = _build_shifts(bits)
-    return _SHIFT_CACHE[bits]
-
-
-def _get_mask(bits: int) -> mx.array:
     if bits not in _MASK_CACHE:
         _MASK_CACHE[bits] = _build_mask(bits)
+
+def _get_shifts(bits: int) -> mx.array:
+    return _SHIFT_CACHE[bits]
+
+def _get_mask(bits: int) -> mx.array:
     return _MASK_CACHE[bits]
 
 
@@ -238,6 +239,7 @@ class GroupScalarQuantizer:
         self.n_bits = n_bits
         self.group_size = group_size
         self.eps = eps
+        build_caches(n_bits)
         self._calibrated_scales: Optional[mx.array] = None
 
     # ── Calibration ──────────────────────────────────────────────────────────

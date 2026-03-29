@@ -4,8 +4,7 @@ PIP ?= $(PYTHON) -m pip
 .PHONY: help install-dev install-apple compile static-check build-dist test-unit test-integration validate-local clean
 
 help:
-	@printf "Targets:
-"
+	@printf "Targets:\n"
 	@printf "  install-dev       Install editable package with dev extras\n"
 	@printf "  install-apple     Install editable package with Apple Silicon MLX extras\n"
 	@printf "  compile           Compile all source and test modules\n"

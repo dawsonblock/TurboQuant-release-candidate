@@ -20,17 +20,19 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _ROOT)
 
 import mlx.core as mx
-from mlx_lm.models.cache import KVCache, TurboQuantKCache, TurboQuantConfig
+from mlx_lm.models.cache import KVCache
+from turboquant import TurboQuantConfig
+from turboquant.runtime.kv_interface import KVCompressor
 
 # ---------------------------------------------------------------------------
 # Config matrix
 # ---------------------------------------------------------------------------
 
 CONFIGS = [
-    dict(main_bits=4, group_size=64),
-    dict(main_bits=3, group_size=64),
-    dict(main_bits=2, group_size=64),
-    dict(main_bits=3, group_size=32),
+    dict(k_bits=4, k_group_size=64),
+    dict(k_bits=3, k_group_size=64),
+    dict(k_bits=2, k_group_size=64),
+    dict(k_bits=3, k_group_size=32),
 ]
 
 TOKEN_COUNTS = [256, 512, 1024]
@@ -62,24 +64,26 @@ def _bench_encode(cache_factory, T: int) -> float:
         c = cache_factory()
         k, v = _make_kv(1)
         c.update_and_fetch(k, v)
-        if hasattr(c, "k_codes") and c.k_codes is not None:
-            mx.eval(c.k_codes)
+        if hasattr(c, "k_packed") and getattr(c, "k_packed", None) is not None:
+            mx.eval(c.k_packed)
 
     # Prefill
     c = cache_factory()
     kp, vp = _make_kv(T)
     c.update_and_fetch(kp, vp)
-    if hasattr(c, "k_codes") and c.k_codes is not None:
-        mx.eval(c.k_codes)
+    if hasattr(c, "k_packed") and getattr(c, "k_packed", None) is not None:
+        mx.eval(c.k_packed)
 
     k1, v1 = _make_kv(1)
     t0 = time.perf_counter()
     for _ in range(REPS):
-        c.update_and_fetch(k1, v1)
-        if hasattr(c, "k_codes") and c.k_codes is not None:
-            mx.eval(c.k_codes)
-        else:
-            mx.eval(c.keys)
+            k1, v1 = _make_kv(1)
+            c.update_and_fetch(k1, v1)
+            # Evaluate after every addition to be fair on latency measurement for generation step.
+            if hasattr(c, "k_packed") and getattr(c, "k_packed", None) is not None:
+                mx.eval(c.k_packed)
+            else:
+                if hasattr(c, "keys"): mx.eval(c.keys)
     elapsed = (time.perf_counter() - t0) / REPS * 1000
     return elapsed
 
@@ -96,23 +100,23 @@ def main():
 
     for cfg_kwargs in CONFIGS:
         cfg_label = "  ".join(f"{k}={v}" for k, v in cfg_kwargs.items())
-        tq_cfg = TurboQuantConfig(return_mode="view", **cfg_kwargs)
+        tq_cfg = TurboQuantConfig(**cfg_kwargs)
 
         for T in TOKEN_COUNTS:
             dense_mb = _dense_bytes(T) / 1e6
 
             # TurboQuant memory after prefill
-            tq = TurboQuantKCache(tq_cfg)
+            tq = KVCompressor(tq_cfg)
             kp, vp = _make_kv(T)
             tq.update_and_fetch(kp, vp)
-            mx.eval(tq.k_codes)
+            mx.eval(tq.k_packed)
             tq_mb = tq.nbytes / 1e6
 
             ratio = dense_mb / tq_mb if tq_mb > 0 else float("inf")
 
             # Latency
             ms_dense = _bench_encode(lambda: KVCache(), T)
-            ms_tq = _bench_encode(lambda: TurboQuantKCache(tq_cfg), T)
+            ms_tq = _bench_encode(lambda: KVCompressor(tq_cfg), T)
 
             print(
                 f"{cfg_label:30s}  {T:>6}  "

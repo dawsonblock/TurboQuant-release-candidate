@@ -2,31 +2,41 @@
 using namespace metal;
 
 kernel void decode_k(
-    device uint *packed [[buffer(0)]],
-    device half *scales [[buffer(1)]],
-    device ushort *resid_idx [[buffer(2)]],
-    device half *resid_vals [[buffer(3)]],
+    device const uint *packed [[buffer(0)]],
+    device const half *scales [[buffer(1)]],
+    device const ushort *resid_idx [[buffer(2)]],
+    device const half *resid_vals [[buffer(3)]],
     device half *out [[buffer(4)]],
     constant int &bits [[buffer(5)]],
     constant int &group_size [[buffer(6)]],
     constant int &topk [[buffer(7)]],
-    uint gid [[thread_position_in_grid]]
+    uint gid [[thread_position_in_grid]],
+    uint tid [[thread_index_in_threadgroup]],
+    uint sid [[simdgroup_index_in_threadgroup]],
+    uint lid [[thread_index_in_simdgroup]]
 ) {
-    // compute group index
     int g = gid / group_size;
+
+    // Load scale into threadgroup memory
+    threadgroup half shared_scale;
+    if (tid == 0) {
+        shared_scale = scales[g];
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
 
     // unpack (example for 4-bit)
     uint word = packed[gid / 8];
     int shift = (gid % 8) * bits;
     uint code = (word >> shift) & ((1 << bits) - 1);
 
-    float scale = scales[g];
+    float scale = (float)shared_scale;
     float val = (float(code) * scale);
 
-    // residual add
+    // residual add using simdgroup operations if possible, otherwise threadgroup
+    int local_idx = gid % group_size;
     for (int i = 0; i < topk; i++) {
-        if (resid_idx[g * topk + i] == (gid % group_size)) {
-            val += resid_vals[g * topk + i];
+        if (resid_idx[g * topk + i] == local_idx) {
+            val += (float)resid_vals[g * topk + i];
         }
     }
 

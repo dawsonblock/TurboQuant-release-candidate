@@ -1,18 +1,22 @@
 """
-TurboQuantKCache decode-step microbenchmark.
+KVCompressor decode-step microbenchmark.
 
 Measures per-token encode latency after a prefill, using the test
-fixtures from test_turboquant_gemma.py so the cache config is identical
-to the unit tests.
+fixtures from tests.integration.test_turboquant_gemma.py so the cache config is identical
+to the unit tests.integration.
 """
 import sys, os, time
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _ROOT)
-sys.path.insert(0, os.path.join(_ROOT, "tests"))
+sys.path.insert(0, os.path.join(_ROOT, "tests.integration"))
 
 import mlx.core as mx
-from test_turboquant_gemma import _make_tq_cache, _make_kv, PREFILL_LEN
+from turboquant import TurboQuantConfig
+from turboquant.runtime.kv_interface import KVCompressor
+from tests.integration.test_turboquant_gemma import _make_kv, PREFILL_LEN
+def my_make_tq_cache(rm):
+    return KVCompressor(TurboQuantConfig(k_bits=3, k_group_size=8, block_tokens=2))
 
 REPS = 100
 
@@ -20,23 +24,23 @@ REPS = 100
 def bench(label: str, return_mode: str = "dequant") -> None:
     # Warmup
     for _ in range(3):
-        tq = _make_tq_cache(return_mode)
+        tq = my_make_tq_cache(return_mode)
         kw, vw = _make_kv(PREFILL_LEN)
         tq.update_and_fetch(kw, vw)
-        mx.eval(tq.k_codes)
+        mx.eval(tq.k_packed)
 
     # Fresh cache + prefill for timing
-    tq = _make_tq_cache(return_mode)
+    tq = my_make_tq_cache(return_mode)
     kp, vp = _make_kv(PREFILL_LEN)
     tq.update_and_fetch(kp, vp)
-    mx.eval(tq.k_codes)
+    mx.eval(tq.k_packed)
 
     k1, v1 = _make_kv(1)
 
     t0 = time.perf_counter()
     for _ in range(REPS):
         tq.update_and_fetch(k1, v1)
-        mx.eval(tq.k_codes)
+        mx.eval(tq.k_packed)
     t1 = time.perf_counter()
 
     ms = (t1 - t0) / REPS * 1000
@@ -44,7 +48,7 @@ def bench(label: str, return_mode: str = "dequant") -> None:
           f"({PREFILL_LEN}+N tokens, {REPS} reps)")
 
 
-print("=== TurboQuantKCache decode-step latency ===")
+print("=== KVCompressor decode-step latency ===")
 bench("dequant mode (encode only)", "dequant")
 bench("view mode   (encode only)", "view")
 print("done")

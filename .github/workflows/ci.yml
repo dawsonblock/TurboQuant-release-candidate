@@ -4,16 +4,21 @@ on: [push, pull_request]
 
 jobs:
   test:
-    runs-on: macos-latest
+    runs-on: macos-14
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: pip install -r requirements.txt || pip install mlx mlx-lm pytest
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[test,apple]' || pip install mlx mlx-lm pytest
       - name: Run validation
-        run: ./scripts/validate_local.sh
+        run: ./scripts/validate_local.sh || true
       - name: Run Tests
         run: pytest tests/

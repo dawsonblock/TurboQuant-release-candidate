@@ -3,7 +3,7 @@ from turboquant import TurboQuantConfig
 from turboquant.runtime.kv_interface import KVCompressor
 
 def run_bench():
-    config = TurboQuantConfig(head_dim=128, n_heads=32)
+    config = TurboQuantConfig()
     
     print("Memory Benchmark (estimated):")
     # Native

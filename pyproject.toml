@@ -24,16 +24,16 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
-  "numpy>=1.24",
-  "huggingface_hub>=0.23",
-  "transformers>=4.39",
+  "numpy>=1.26",
+  "huggingface_hub>=0.24",
+  "transformers>=4.40",
   "tqdm>=4.66",
   "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
 apple = [
-  "mlx>=0.29.3; platform_system == 'Darwin' and platform_machine == 'arm64'",
+  "mlx>=0.30.0; platform_system == 'Darwin' and platform_machine == 'arm64'",
 ]
 test = [
   "pytest>=8",

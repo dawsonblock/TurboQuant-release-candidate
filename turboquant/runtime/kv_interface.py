@@ -235,6 +235,10 @@ class KVCompressor:
         V = values.shape[-1]
         prev = self.offset
 
+        # Build pipeline explicitly on first call
+        if self.pipeline._d_head is None:
+            self.pipeline.build(D, V)
+
         self._check_shape_consistency(B, H, D, V)
         self._ensure_capacity(B, H, T, D, V, keys.dtype)
 

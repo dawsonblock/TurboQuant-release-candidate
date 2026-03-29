@@ -22,7 +22,8 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _ROOT)
 
 import mlx.core as mx
-from mlx_lm.models.cache import TurboQuantKCache, TurboQuantConfig
+from turboquant import TurboQuantConfig
+from turboquant.runtime.kv_interface import KVCompressor
 from turboquant.runtime.attention import turboquant_streaming_attention
 
 # ---------------------------------------------------------------------------
@@ -54,15 +55,15 @@ def _make_kv(T: int):
 def _fill_cache(T: int, block_tokens: int):
     """Fill a view-mode TurboQuant cache and return (cache, keys_view)."""
     cfg = TurboQuantConfig(
-        main_bits=3,
-        group_size=64,
-        return_mode="view",
+        k_bits=3,
+        k_group_size=64,
         block_tokens=block_tokens,
     )
-    tq = TurboQuantKCache(cfg)
+    tq = KVCompressor(cfg)
     kp, vp = _make_kv(T)
     view, _ = tq.update_and_fetch(kp, vp)
-    mx.eval(tq.k_codes)
+    if hasattr(tq, "k_packed") and getattr(tq, "k_packed", None) is not None:
+        mx.eval(tq.k_packed)
     return tq, view
 
 

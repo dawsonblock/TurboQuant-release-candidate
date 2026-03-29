@@ -36,6 +36,7 @@ from turboquant.core.rotation import FixedRotation
 from turboquant.core.quantizer import (
     GroupScalarQuantizer,
     dequantize_groups,
+    build_caches,
 )
 from turboquant.core.residual import (
     encode_topk_residual,
@@ -74,6 +75,24 @@ class TurboQuantPipeline:
         self._d_pad: Optional[int] = None
         self._v_dim: Optional[int] = None
         self._v_pad: Optional[int] = None
+
+    def build(self, d_head_k: int, d_head_v: int) -> None:
+        """Pre-allocate all caches, quantizers, and rotations explicitely."""
+        # Setup quantizers
+        self._get_k_quant()
+        if self.config.v_enabled:
+            self._get_v_quant()
+        
+        # Build caches
+        build_caches(self.config.k_bits)
+        if self.config.v_enabled:
+            build_caches(self.config.v_bits)
+
+        # Bind shapes explicitly and build rotation
+        self._bind_k_shape_once(d_head_k)
+        self._get_rotation(d_head_k)
+        if self.config.v_enabled:
+            self._bind_v_shape_once(d_head_v)
 
     # ── Internal helpers ─────────────────────────────────────────────────────
 

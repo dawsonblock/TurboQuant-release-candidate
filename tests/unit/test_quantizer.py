@@ -15,6 +15,7 @@ import pytest
 
 from turboquant.core.quantizer import (
     GroupScalarQuantizer,
+    build_caches,
     pack_codes,
     unpack_codes,
 )
@@ -39,6 +40,7 @@ def test_pack_unpack_round_trip(bits):
     raw = mx.array(
         np.random.randint(0, qmax + 1, (2, 4, d), dtype=np.uint32)
     )
+    build_caches(bits)
     packed = pack_codes(raw, bits)
     recovered = unpack_codes(packed, d, bits)
     mx.eval(recovered)
