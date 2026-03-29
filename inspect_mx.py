@@ -1,5 +1,6 @@
-import mlx.core as mx
 import inspect
+
+import mlx.core as mx
 
 with open("mlxf.txt", "w") as f:
     f.write(str(inspect.signature(mx.fast.metal_kernel)))

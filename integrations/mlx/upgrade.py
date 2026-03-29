@@ -24,8 +24,6 @@ Usage
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional
-
 
 # ── Event ─────────────────────────────────────────────────────────────────────
 
@@ -58,9 +56,9 @@ class CacheUpgradeEvent:
 
 def upgrade_cache_list(
     prompt_cache: list,
-    k_start: Optional[int],
-    config: "TurboQuantConfig",  # noqa: F821 — resolved at runtime
-) -> List[CacheUpgradeEvent]:
+    k_start: int | None,
+    config: "Any",  # type: ignore
+) -> list[CacheUpgradeEvent]:
     """Promote KVCache entries to TurboQuantKCache when their offset threshold
     is reached.
 
@@ -88,9 +86,9 @@ def upgrade_cache_list(
     """
     # Lazy import to avoid circular deps and to keep this module importable
     # even if turboquant or mlx_lm is not fully initialised.
-    from integrations.mlx.cache_adapter import TurboQuantKCache, TurboQuantConfig
+    from integrations.mlx.cache_adapter import TurboQuantConfig, TurboQuantKCache
 
-    events: List[CacheUpgradeEvent] = []
+    events: list[CacheUpgradeEvent] = []
 
     if k_start is None:
         # Fast path: no upgrade policy in effect.
@@ -144,7 +142,7 @@ def upgrade_cache_list(
             rotation=config.rotation,
             return_mode="view",
             scale_dtype=config.scale_dtype,
-            resid_scale_bits=8, # legacy fallback 
+            resid_scale_bits=8, # legacy fallback
             residual_topk=config.residual_topk,
             v_bits=config.v_bits,
             v_group_size=config.v_group_size,
@@ -155,7 +153,7 @@ def upgrade_cache_list(
         tq = TurboQuantKCache(legacy_cfg)
         if getattr(c, "keys", None) is not None:
             tq.update_and_fetch(c.keys[..., :cur_offset, :], c.values[..., :cur_offset, :])
-        
+
         prompt_cache[i] = tq
         events.append(
             CacheUpgradeEvent(

@@ -1,6 +1,6 @@
 # Copyright © 2025 Apple Inc.
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -35,8 +35,8 @@ class ModelArgs(BaseModelArgs):
     conv_bias: bool
     conv_L_cache: int
     rope_theta: float
-    full_attn_idxs: Optional[List[int]] = None
-    layer_types: Optional[List[str]] = None
+    full_attn_idxs: Optional[list[int]] = None
+    layer_types: Optional[list[str]] = None
 
     def __post_init__(self):
         if self.full_attn_idxs is None:

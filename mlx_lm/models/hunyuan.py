@@ -1,7 +1,7 @@
 # Copyright © 2023-2024 Apple Inc.
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -30,7 +30,7 @@ class ModelArgs(BaseModelArgs):
     use_cla: bool
     cla_share_factor: 2
     moe_intermediate_size: Optional[Union[int, list]] = None
-    rope_scaling: Optional[Dict[str, Union[float, str]]] = None
+    rope_scaling: Optional[dict[str, Union[float, str]]] = None
     tie_word_embeddings: bool = False
 
     def __post_init__(self):
@@ -227,7 +227,7 @@ class DecoderLayer(nn.Module):
         x: mx.array,
         mask: Optional[mx.array] = None,
         cache: Optional[Any] = None,
-        shared_kv_states: Optional[Tuple[mx.array, mx.array]] = None,
+        shared_kv_states: Optional[tuple[mx.array, mx.array]] = None,
     ):
         r, shared_kv_states = self.self_attn(
             self.input_layernorm(x), mask, cache, shared_kv_states

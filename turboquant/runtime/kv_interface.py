@@ -27,17 +27,16 @@ State
 """
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Generator, Iterator, List, Optional, Tuple
 
 import mlx.core as mx
 import numpy as np
-from turboquant.errors import TurboQuantShapeError
 
 from turboquant.config import TurboQuantConfig
 from turboquant.core.pipeline import TurboQuantPipeline
+from turboquant.errors import TurboQuantShapeError
 from turboquant.runtime.layout import ensure_layout
-
 
 # ── View type ─────────────────────────────────────────────────────────────────
 
@@ -48,7 +47,7 @@ class TurboQuantKeysView:
     Passed to streaming-attention loops in place of a dense K tensor.
     ``cache.iter_rotated_kv_blocks(view)`` yields decoded K/V blocks.
     """
-    cache: "KVCompressor"
+    cache: KVCompressor
     start: int
     end: int
     d_head: int
@@ -78,35 +77,35 @@ class KVCompressor:
 
         # ── Token buffers (None until first update) ──────────────────────────
         # K compressed
-        self._k_packed:      Optional[mx.array] = None  # [B,H,cap,nw_k]
-        self._k_scales:      Optional[mx.array] = None  # [B,H,cap,ng_k]
-        self._resid_vals:    Optional[mx.array] = None  # [B,H,cap,ng_k,topk]
-        self._resid_idx:     Optional[mx.array] = None  # [B,H,cap,ng_k,topk]
+        self._k_packed:      mx.array | None = None  # [B,H,cap,nw_k]
+        self._k_scales:      mx.array | None = None  # [B,H,cap,ng_k]
+        self._resid_vals:    mx.array | None = None  # [B,H,cap,ng_k,topk]
+        self._resid_idx:     mx.array | None = None  # [B,H,cap,ng_k,topk]
         # V compressed
-        self._v_packed:      Optional[mx.array] = None  # [B,H,cap,nw_v]
-        self._v_scales:      Optional[mx.array] = None  # [B,H,cap,ng_v]
+        self._v_packed:      mx.array | None = None  # [B,H,cap,nw_v]
+        self._v_scales:      mx.array | None = None  # [B,H,cap,ng_v]
 
         # ── Metadata ─────────────────────────────────────────────────────────
         self.offset:  int = 0     # tokens stored so far
         self._cap:    int = 0     # allocated capacity
-        self._dtype:  Optional[str] = None
+        self._dtype:  str | None = None
         self._B:      int = 0
         self._H:      int = 0
 
     @property
-    def k_packed(self) -> Optional[mx.array]:
+    def k_packed(self) -> mx.array | None:
         return self._k_packed
 
     @property
-    def k_scales(self) -> Optional[mx.array]:
+    def k_scales(self) -> mx.array | None:
         return self._k_scales
 
     @property
-    def v_packed(self) -> Optional[mx.array]:
+    def v_packed(self) -> mx.array | None:
         return self._v_packed
 
     @property
-    def v_scales(self) -> Optional[mx.array]:
+    def v_scales(self) -> mx.array | None:
         return self._v_scales
 
     # ── Capacity management ───────────────────────────────────────────────────
@@ -139,7 +138,7 @@ class KVCompressor:
 
         new_cap = max(self._cap + step, need)
 
-        from turboquant.core.quantizer import _round_up, _codes_per_word
+        from turboquant.core.quantizer import _codes_per_word, _round_up
         # Two-phase padding matching quantize_groups:
         #   Phase 1: round up to group boundary
         #   Phase 2: round up to word-packing boundary
@@ -214,7 +213,7 @@ class KVCompressor:
         self,
         keys:   mx.array,
         values: mx.array,
-    ) -> Tuple[TurboQuantKeysView, mx.array]:
+    ) -> tuple[TurboQuantKeysView, mx.array]:
         """Compress and store a new block of (K, V) tokens.
 
         Parameters
@@ -296,8 +295,8 @@ class KVCompressor:
     def iter_rotated_kv_blocks(
         self,
         view: TurboQuantKeysView,
-        block_tokens: Optional[int] = None,
-    ) -> Iterator[Tuple[int, int, mx.array, mx.array]]:
+        block_tokens: int | None = None,
+    ) -> Iterator[tuple[int, int, mx.array, mx.array]]:
         """Yield (start, end, k_rotated, v) blocks for streaming attention.
 
         k_rotated is in the rotated coordinate frame.
@@ -349,17 +348,6 @@ class KVCompressor:
             ]
             if getattr(self, k) is not None
         )
-
-    @property
-    def nbytes(self) -> int:
-        return sum(
-            getattr(self, k).nbytes
-            for k in [
-                "_k_packed", "_k_scales", "_resid_vals", "_resid_idx",
-                "_v_packed", "_v_scales"
-            ]
-            if getattr(self, k) is not None
-        )
     def trim(self, n: int) -> int:
         """Logically remove the last *n* tokens from the cache.
 
@@ -383,8 +371,8 @@ class KVCompressor:
 
     def iter_blocks(
         self,
-        block_tokens: Optional[int] = None,
-    ) -> Iterator[Tuple[int, int, mx.array, mx.array]]:
+        block_tokens: int | None = None,
+    ) -> Iterator[tuple[int, int, mx.array, mx.array]]:
         """Iterate over the full stored history in (K, V) blocks.
 
         Equivalent to calling ``iter_rotated_kv_blocks`` with a view that
@@ -503,7 +491,7 @@ class KVCompressor:
         state: dict,
         config: TurboQuantConfig,
         layer_id: int = 0,
-    ) -> "KVCompressor":
+    ) -> KVCompressor:
         """Restore a compressor from a state dict produced by ``state()``.
 
         Calls :func:`turboquant.runtime.state.validate_state` before

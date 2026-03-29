@@ -1,7 +1,7 @@
 # Copyright © 2023-2024 Apple Inc.
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -30,7 +30,7 @@ class ModelArgs(BaseModelArgs):
     rope_theta: float
     num_local_experts: int
     num_experts_per_tok: int
-    rope_scaling: Optional[Dict[str, Union[float, str]]] = None
+    rope_scaling: Optional[dict[str, Union[float, str]]] = None
     tie_word_embeddings: bool = True
 
 

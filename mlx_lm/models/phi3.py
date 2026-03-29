@@ -1,7 +1,7 @@
 # Copyright © 2023-2024 Apple Inc.
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -22,7 +22,7 @@ class ModelArgs(BaseModelArgs):
     num_key_value_heads: Optional[int] = None
     rope_theta: float = 10000
     rope_traditional: bool = False
-    rope_scaling: Optional[Dict[str, Union[float, List[float]]]] = None
+    rope_scaling: Optional[dict[str, Union[float, list[float]]]] = None
     partial_rotary_factor: float = 1.0
     max_position_embeddings: int = 131072
     original_max_position_embeddings: int = 4096

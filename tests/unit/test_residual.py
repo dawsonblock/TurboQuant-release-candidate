@@ -14,8 +14,8 @@ import numpy as np
 import pytest
 
 from turboquant.core.residual import (
-    encode_topk_residual,
     decode_topk_residual,
+    encode_topk_residual,
 )
 
 

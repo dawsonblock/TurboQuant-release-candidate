@@ -1,13 +1,9 @@
 # Copyright © 2023-2024 Apple Inc.
 
-import copy
-import math
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import mlx.core as mx
 import mlx.nn as nn
-import numpy as np
 from mlx.utils import tree_flatten, tree_map, tree_unflatten
 
 from .base import create_causal_mask
@@ -16,7 +12,7 @@ from .base import create_causal_mask
 def make_prompt_cache(
     model: nn.Module,
     max_kv_size: Optional[int] = None,
-) -> List[Any]:
+) -> list[Any]:
     """
     Construct the model's cache for use in generation.
 
@@ -41,7 +37,7 @@ def make_prompt_cache(
         return [KVCache() for _ in range(num_layers)]
 
 
-def save_prompt_cache(file_name: str, cache: List[Any], metadata: Dict[str, str] = {}):
+def save_prompt_cache(file_name: str, cache: list[Any], metadata: dict[str, str] = {}):
     """
     Save a pre-computed prompt cache to a file.
 
@@ -86,14 +82,14 @@ def load_prompt_cache(file_name, return_metadata=False):
     return cache
 
 
-def can_trim_prompt_cache(cache: List[Any]) -> bool:
+def can_trim_prompt_cache(cache: list[Any]) -> bool:
     """
     Check if model's cache can be trimmed.
     """
     return all(c.is_trimmable() for c in cache)
 
 
-def trim_prompt_cache(cache: List[Any], num_tokens: int) -> List[Any]:
+def trim_prompt_cache(cache: list[Any], num_tokens: int) -> list[Any]:
     """
     Trim the model's cache by the given number of tokens.
 
@@ -112,7 +108,7 @@ def trim_prompt_cache(cache: List[Any], num_tokens: int) -> List[Any]:
     return [c.trim(num_tokens) for c in cache][0]
 
 
-def cache_length(cache: List[Any]):
+def cache_length(cache: list[Any]):
     return max(len(c) for c in cache)
 
 
@@ -589,7 +585,7 @@ class RotatingKVCache(_BaseCache):
 
 
 class ArraysCache(_BaseCache):
-    def __init__(self, size, left_padding: Optional[List[int]] = None):
+    def __init__(self, size, left_padding: Optional[list[int]] = None):
         self.cache = [None] * size
         self.left_padding = mx.array(left_padding) if left_padding else None
 
@@ -629,7 +625,7 @@ class ArraysCache(_BaseCache):
 
 
 class MambaCache(ArraysCache):
-    def __init__(self, left_padding: Optional[List[int]] = None):
+    def __init__(self, left_padding: Optional[list[int]] = None):
         super().__init__(size=2, left_padding=left_padding)
 
 
@@ -706,7 +702,7 @@ class CacheList(_BaseCache):
 
     @state.setter
     def state(self, v):
-        state_lens = [len(c.state) for c in self.caches]
+        [len(c.state) for c in self.caches]
         start = 0
         for c in self.caches:
             l = len(c.state)
@@ -740,7 +736,7 @@ def dynamic_roll(x, shifts, axis):
 class BatchKVCache(_BaseCache):
     step = 256
 
-    def __init__(self, left_padding: List[int]):
+    def __init__(self, left_padding: list[int]):
         """
         The BatchKV cache expects inputs to be left-padded.
 
@@ -927,7 +923,7 @@ class BatchKVCache(_BaseCache):
 class BatchRotatingKVCache(_BaseCache):
     step = 256
 
-    def __init__(self, max_size, left_padding: List[int]):
+    def __init__(self, max_size, left_padding: list[int]):
         self.keys = None
         self.values = None
 

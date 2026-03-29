@@ -25,11 +25,9 @@ API
 """
 from __future__ import annotations
 
-from typing import Optional, Tuple
-
 import mlx.core as mx
-from turboquant.errors import TurboQuantShapeError
 
+from turboquant.errors import TurboQuantShapeError
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -111,7 +109,7 @@ def _compute_scales(
     x_groups: mx.array,
     q_max: int,
     eps: float,
-    calibrated: Optional[mx.array],
+    calibrated: mx.array | None,
 ) -> mx.array:
     """Return per-group scales.
 
@@ -240,7 +238,7 @@ class GroupScalarQuantizer:
         self.group_size = group_size
         self.eps = eps
         build_caches(n_bits)
-        self._calibrated_scales: Optional[mx.array] = None
+        self._calibrated_scales: mx.array | None = None
 
     # ── Calibration ──────────────────────────────────────────────────────────
 
@@ -273,7 +271,7 @@ class GroupScalarQuantizer:
     def is_calibrated(self) -> bool:
         return self._calibrated_scales is not None
 
-    def calibration_state(self) -> Optional[mx.array]:
+    def calibration_state(self) -> mx.array | None:
         """Return calibrated scales for serialization, if present."""
         return self._calibrated_scales
 
@@ -283,7 +281,7 @@ class GroupScalarQuantizer:
 
     # ── Encode / decode ───────────────────────────────────────────────────────
 
-    def encode(self, x: mx.array) -> Tuple[mx.array, mx.array]:
+    def encode(self, x: mx.array) -> tuple[mx.array, mx.array]:
         """x: [..., D] → (packed [..., n_words], scales [..., n_groups])."""
         d_orig = x.shape[-1]
         d_pad = _round_up(d_orig, self.group_size)

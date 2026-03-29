@@ -201,7 +201,7 @@ def configure_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--quant-predicate",
-        help=f"Mixed-bit quantization recipe.",
+        help="Mixed-bit quantization recipe.",
         choices=QUANT_RECIPES,
         type=str,
         required=False,

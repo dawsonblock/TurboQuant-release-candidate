@@ -5,16 +5,21 @@ Measures per-token encode latency after a prefill, using the test
 fixtures from tests.integration.test_turboquant_gemma.py so the cache config is identical
 to the unit tests.integration.
 """
-import sys, os, time
+import os
+import sys
+import time
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _ROOT)
 sys.path.insert(0, os.path.join(_ROOT, "tests.integration"))
 
 import mlx.core as mx
+
+from tests.integration.test_turboquant_gemma import PREFILL_LEN, _make_kv
 from turboquant import TurboQuantConfig
 from turboquant.runtime.kv_interface import KVCompressor
-from tests.integration.test_turboquant_gemma import _make_kv, PREFILL_LEN
+
+
 def my_make_tq_cache(rm):
     return KVCompressor(TurboQuantConfig(k_bits=3, k_group_size=8, block_tokens=2))
 

@@ -25,8 +25,6 @@ Typical usage
 """
 from __future__ import annotations
 
-from typing import List
-
 import mlx.core as mx
 import mlx.nn as nn
 

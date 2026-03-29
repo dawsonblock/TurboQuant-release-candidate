@@ -1,7 +1,7 @@
 # Copyright © 2023-2024 Apple Inc.
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -17,9 +17,9 @@ class ModelArgs(BaseModelArgs):
     model_dim: int
     vocab_size: int
     ffn_dim_divisor: int
-    num_query_heads: List
-    num_kv_heads: List
-    ffn_multipliers: List
+    num_query_heads: list
+    num_kv_heads: list
+    ffn_multipliers: list
     ffn_with_glu: bool = True
     normalize_qk_projections: bool = True
     share_input_output_layers: bool = True

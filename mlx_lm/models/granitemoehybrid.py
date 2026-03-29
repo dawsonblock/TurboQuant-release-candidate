@@ -1,7 +1,7 @@
 # Copyright © 2025 Apple Inc.
 
 from dataclasses import dataclass
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -34,7 +34,7 @@ class ModelArgs(BaseModelArgs):
     attention_multiplier: float
     logits_scaling: float
     residual_multiplier: float
-    layer_types: List[str]
+    layer_types: list[str]
     rms_norm_eps: float
     rope_theta: float
 
@@ -59,7 +59,7 @@ class ModelArgs(BaseModelArgs):
     # Other optional parameters
     position_embedding_type: str = "rope"
     tie_word_embeddings: bool = True
-    time_step_limit: Tuple[float, float] = (0.001, 100.0)
+    time_step_limit: tuple[float, float] = (0.001, 100.0)
 
     # Mode flags - inferred from num_local_experts
     @property

@@ -98,9 +98,11 @@ def iterate_batches(
 ):
     # Sort by length:
     if isinstance(dataset, CacheDataset):
-        len_fn = lambda idx: dataset.itemlen(idx)
+        def len_fn(idx):
+            return dataset.itemlen(idx)
     else:
-        len_fn = lambda idx: len(dataset[idx][0])
+        def len_fn(idx):
+            return len(dataset[idx][0])
     idx = sorted(range(len(dataset)), key=len_fn)
     if len(dataset) < batch_size:
         raise ValueError(

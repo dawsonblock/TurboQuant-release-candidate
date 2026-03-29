@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -30,7 +30,7 @@ class ModelArgs(BaseModelArgs):
     rope_theta: float
     vocab_size: int
     first_k_dense_replace: int
-    rope_scaling: Optional[Dict[str, Union[float, str]]] = None
+    rope_scaling: Optional[dict[str, Union[float, str]]] = None
     use_bias: bool = False
     use_qkv_bias: bool = False
     norm_head: bool = False

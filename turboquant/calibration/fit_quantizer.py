@@ -16,7 +16,8 @@ and returns (keys, values) as MLX arrays in [B, H, T, D] layout.
 """
 from __future__ import annotations
 
-from typing import Callable, Iterable, Literal, Optional, Tuple
+from collections.abc import Iterable
+from typing import Callable, Literal
 
 import mlx.core as mx
 
@@ -28,7 +29,7 @@ def calibrate(
     pipeline: TurboQuantPipeline,
     data_iter: Iterable,
     extract_kv: Callable[
-        [object], Tuple[Optional[mx.array], Optional[mx.array]]
+        [object], tuple[mx.array | None, mx.array | None]
     ],
     mode: Literal["k", "v", "both"] = "both",
     max_batches: int = 64,

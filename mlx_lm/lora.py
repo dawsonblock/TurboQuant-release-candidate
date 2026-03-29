@@ -3,7 +3,6 @@ import math
 import os
 import re
 import types
-import warnings
 from pathlib import Path
 
 import mlx.core as mx
@@ -348,7 +347,7 @@ def main():
     args = vars(args)
     if config:
         print("Loading configuration file", config)
-        with open(config, "r") as file:
+        with open(config) as file:
             config = yaml.load(file, yaml_loader)
         # Prefer parameters from command-line arguments
         for k, v in config.items():

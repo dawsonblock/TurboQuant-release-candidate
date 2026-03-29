@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -29,7 +29,7 @@ class ModelArgs(BaseModelArgs):
     qk_norm: bool
     tie_word_embeddings: bool
     rope_traditional: bool = False
-    rope_scaling: Optional[Dict[str, Union[float, str]]] = None
+    rope_scaling: Optional[dict[str, Union[float, str]]] = None
 
 
 @partial(mx.compile, shapeless=True)

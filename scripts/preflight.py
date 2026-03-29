@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-import sys
 import platform
+import sys
+
 
 def main():
     print("Running TurboQuant Preflight Checks...")
-    
+
     # Check Python Version
     py_version = sys.version_info
     if py_version < (3, 9):
@@ -28,7 +29,7 @@ def main():
     except ImportError:
         print("ERROR: Could not import `mlx.core`. Ensure mlx is installed.")
         sys.exit(1)
-        
+
     print("\nPreflight checks passed! Readiness confirmed.")
 
 if __name__ == "__main__":

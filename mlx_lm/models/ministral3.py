@@ -1,7 +1,7 @@
 # Copyright © 2023-2024 Apple Inc.
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -23,9 +23,9 @@ class ModelArgs(BaseModelArgs):
     head_dim: Optional[int] = None
     max_position_embeddings: Optional[int] = None
     num_key_value_heads: Optional[int] = None
-    rope_parameters: Optional[Dict[str, Union[float, str]]] = None
+    rope_parameters: Optional[dict[str, Union[float, str]]] = None
     tie_word_embeddings: bool = True
-    layer_types: Optional[List[str]] = None
+    layer_types: Optional[list[str]] = None
     sliding_window: Optional[int] = None
 
     def __post_init__(self):

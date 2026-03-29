@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import math
 import os
-from typing import Optional
 
 import mlx.core as mx
 import numpy as np
@@ -96,8 +95,8 @@ class FixedRotation:
         self.seed = seed
         self.rotation_type = rotation_type
 
-        self._R: Optional[mx.array] = None
-        self._RT: Optional[mx.array] = None
+        self._R: mx.array | None = None
+        self._RT: mx.array | None = None
         self._can_use_fast_hadamard = (self.rotation_type == "hadamard" and _is_power_of_two(dim))
 
         if rotation_type not in ("identity", "hadamard", "random_orthogonal"):
@@ -146,7 +145,7 @@ class FixedRotation:
         np.save(path, R_np)
 
     @classmethod
-    def load(cls, path: str) -> "FixedRotation":
+    def load(cls, path: str) -> FixedRotation:
         """Load a rotation matrix saved with ``save``."""
         R_np = np.load(path).astype(np.float32)
         dim = R_np.shape[0]

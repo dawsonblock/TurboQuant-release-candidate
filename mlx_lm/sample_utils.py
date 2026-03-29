@@ -2,7 +2,7 @@
 
 import math
 from functools import partial
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Optional
 
 import mlx.core as mx
 
@@ -15,7 +15,7 @@ def make_sampler(
     top_k: int = 0,
     xtc_probability: float = 0.0,
     xtc_threshold: float = 0.0,
-    xtc_special_tokens: List[int] = [],
+    xtc_special_tokens: list[int] = [],
 ) -> Callable[[mx.array], mx.array]:
     """
     Make a sampler function for use with ``generate_step``.
@@ -70,7 +70,7 @@ def make_sampler(
 
 
 def make_logits_processors(
-    logit_bias: Optional[Dict[int, float]] = None,
+    logit_bias: Optional[dict[int, float]] = None,
     repetition_penalty: Optional[float] = None,
     repetition_context_size: Optional[int] = 20,
 ):
@@ -239,7 +239,7 @@ def apply_xtc(
     logits: mx.array,
     xtc_probability: float,
     xtc_threshold: float,
-    xtc_special_tokens: List[int],
+    xtc_special_tokens: list[int],
 ) -> mx.array:
     """
     Apply XTC sampling to the logits.

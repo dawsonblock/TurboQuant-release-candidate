@@ -2,7 +2,7 @@
 
 import math
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -16,7 +16,7 @@ from .switch_layers import SwitchGLU
 @dataclass
 class ModelArgs(BaseModelArgs):
     model_type: str
-    layer_types: List[str]
+    layer_types: list[str]
     vocab_size: int = 200192
     hidden_size: int = 2048
     intermediate_size: int = 6144
@@ -28,7 +28,7 @@ class ModelArgs(BaseModelArgs):
     max_position_embeddings: int = 131072
     rms_norm_eps: float = 1e-5
     rope_theta: float = 10000
-    rope_scaling: Optional[Dict[str, Union[float, str]]] = None
+    rope_scaling: Optional[dict[str, Union[float, str]]] = None
     tie_word_embeddings: bool = False
     # MoE config
     num_experts: int = 128

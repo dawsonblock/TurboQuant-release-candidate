@@ -1,7 +1,7 @@
 # Copyright © 2023-2024 Apple Inc.
 
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -61,7 +61,7 @@ class Attention(nn.Module):
         self,
         x: mx.array,
         mask: Optional[mx.array] = None,
-        cache: Optional[Tuple[mx.array, mx.array]] = None,
+        cache: Optional[tuple[mx.array, mx.array]] = None,
     ) -> mx.array:
         B, L, D = x.shape
 
@@ -126,7 +126,7 @@ class TransformerBlock(nn.Module):
         self,
         x: mx.array,
         mask: Optional[mx.array] = None,
-        cache: Optional[Tuple[mx.array, mx.array]] = None,
+        cache: Optional[tuple[mx.array, mx.array]] = None,
     ) -> mx.array:
 
         h = self.input_layernorm(x)

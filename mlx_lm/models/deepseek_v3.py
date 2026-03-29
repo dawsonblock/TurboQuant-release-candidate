@@ -2,8 +2,7 @@
 
 import math
 from dataclasses import dataclass
-from functools import partial
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -43,7 +42,7 @@ class ModelArgs(BaseModelArgs):
     max_position_embeddings: int = 2048
     rms_norm_eps: float = 1e-6
     rope_theta: float = 10000.0
-    rope_scaling: Dict = None
+    rope_scaling: dict = None
     attention_bias: bool = False
 
 

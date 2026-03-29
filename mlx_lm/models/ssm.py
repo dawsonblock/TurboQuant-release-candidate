@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -72,7 +72,7 @@ def ssm_update_kernel(
     dt: mx.array,
     dt_bias: mx.array,
     state: mx.array,
-    time_step_limit: Tuple[float, float],
+    time_step_limit: tuple[float, float],
 ):
     n, _, h, d = hidden_states.shape
     input_type = hidden_states.dtype
@@ -112,10 +112,10 @@ def ssm_attn(
     dt: mx.array,
     dt_bias: mx.array,
     state: Optional[mx.array] = None,
-    time_step_limit: Tuple[float, float] = (0.001, 100.0),
+    time_step_limit: tuple[float, float] = (0.001, 100.0),
     mask: Optional[mx.array] = None,
     step: int = 256,
-) -> Tuple[mx.array, mx.array]:
+) -> tuple[mx.array, mx.array]:
     """SSD-SSM forward pass.
 
     Args:
@@ -197,7 +197,7 @@ def ssm_update(
     dt: mx.array,
     dt_bias: mx.array,
     state: Optional[mx.array] = None,
-    time_step_limit: Tuple[float, float] = (0.001, 100.0),
+    time_step_limit: tuple[float, float] = (0.001, 100.0),
     mask: Optional[mx.array] = None,
 ):
     seq_len = hidden_states.shape[1]

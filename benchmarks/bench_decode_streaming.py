@@ -14,17 +14,18 @@ Sample output:
       256           64         0.45         0.38      0.84x
       ...
 """
-import sys
 import os
+import sys
 import time
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _ROOT)
 
 import mlx.core as mx
+
 from turboquant import TurboQuantConfig
-from turboquant.runtime.kv_interface import KVCompressor
 from turboquant.runtime.attention import turboquant_streaming_attention
+from turboquant.runtime.kv_interface import KVCompressor
 
 # ---------------------------------------------------------------------------
 # Dims

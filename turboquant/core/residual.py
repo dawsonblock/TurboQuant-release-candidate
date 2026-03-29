@@ -20,9 +20,8 @@ A TODO: replace with mx.fast.metal_kernel scatter once the API stabilises.
 """
 from __future__ import annotations
 
-from typing import Tuple
-
 import mlx.core as mx
+
 from turboquant.errors import TurboQuantShapeError
 
 
@@ -30,7 +29,7 @@ def encode_topk_residual(
     residual: mx.array,
     k: int,
     group_size: int,
-) -> Tuple[mx.array, mx.array]:
+) -> tuple[mx.array, mx.array]:
     """Compute per-group top-k sparse representation of *residual*.
 
     Parameters

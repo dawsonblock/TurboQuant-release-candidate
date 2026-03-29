@@ -1,7 +1,7 @@
 # Copyright © 2024 Apple Inc.
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -38,7 +38,7 @@ class TextArgs(BaseModelArgs):
     max_position_embeddings: int = 2048
     rms_norm_eps: float = 1e-6
     rope_theta: float = 10000.0
-    rope_scaling: Dict = None
+    rope_scaling: dict = None
     attention_bias: bool = False
 
 

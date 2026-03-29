@@ -1,4 +1,4 @@
-with open("turboquant/runtime/kv_interface.py", "r") as f:
+with open("turboquant/runtime/kv_interface.py") as f:
     lines = f.readlines()
 
 out = []

@@ -5,10 +5,11 @@ All parameters are fixed at construction. The pipeline has no runtime
 branches — the config selects the execution path once at init time.
 """
 from __future__ import annotations
-from turboquant.errors import TurboQuantConfigError
 
 from dataclasses import dataclass
 from typing import Literal
+
+from turboquant.errors import TurboQuantConfigError
 
 
 @dataclass
@@ -47,7 +48,7 @@ class TurboQuantConfig:
     eps: float = 1e-6
     scale_dtype: Literal["float16", "bfloat16"] = "float16"
     v_scale_dtype: Literal["float16", "bfloat16"] = "float16"
-    
+
     # ── Deployment ───────────────────────────────────────────────────────────
     mode: Literal["research", "fast", "kernel"] = "research"
 

@@ -12,14 +12,15 @@ Prints a table like:
   main_bits=3 group=64      256     4.00     0.42   9.6x    0.12     0.18
   ...
 """
-import sys
 import os
+import sys
 import time
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _ROOT)
 
 import mlx.core as mx
+
 from mlx_lm.models.cache import KVCache
 from turboquant import TurboQuantConfig
 from turboquant.runtime.kv_interface import KVCompressor

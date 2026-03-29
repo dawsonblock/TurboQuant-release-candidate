@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -36,7 +36,7 @@ class ModelArgs(BaseModelArgs):
     num_experts_per_tok: int
     decoder_sparse_step: int
     shared_expert_intermediate_size: int
-    mlp_only_layers: List[int]
+    mlp_only_layers: list[int]
     moe_intermediate_size: int
     rms_norm_eps: float
     vocab_size: int
@@ -47,8 +47,8 @@ class ModelArgs(BaseModelArgs):
     norm_topk_prob: bool = False
     tie_word_embeddings: bool = False
     attention_bias: bool = False
-    head_dim: Optional[int] = None
-    rope_scaling: Optional[Dict[str, Union[float, str]]] = None
+    head_dim: int | None = None
+    rope_scaling: dict[str, float | str] | None = None
     full_attention_interval: int = 4
 
 
@@ -110,8 +110,8 @@ class Qwen3NextAttention(nn.Module):
     def __call__(
         self,
         x: mx.array,
-        mask: Optional[mx.array] = None,
-        cache: Optional[Any] = None,
+        mask: mx.array | None = None,
+        cache: Any | None = None,
     ) -> mx.array:
         B, L, D = x.shape
 
@@ -225,8 +225,8 @@ class Qwen3NextGatedDeltaNet(nn.Module):
     def __call__(
         self,
         inputs: mx.array,
-        mask: Optional[mx.array] = None,
-        cache: Optional[Any] = None,
+        mask: mx.array | None = None,
+        cache: Any | None = None,
     ) -> mx.array:
         B, S, _ = inputs.shape
         q, k, v, z, b, a = self.fix_query_key_value_ordering(
@@ -347,8 +347,8 @@ class Qwen3NextDecoderLayer(nn.Module):
     def __call__(
         self,
         x: mx.array,
-        mask: Optional[mx.array] = None,
-        cache: Optional[Any] = None,
+        mask: mx.array | None = None,
+        cache: Any | None = None,
     ) -> mx.array:
         if self.is_linear:
             r = self.linear_attn(self.input_layernorm(x), mask, cache)
@@ -374,7 +374,7 @@ class Qwen3NextModel(nn.Module):
     def __call__(
         self,
         inputs: mx.array,
-        cache: Optional[Any] = None,
+        cache: Any | None = None,
     ) -> mx.array:
         hidden_states = self.embed_tokens(inputs)
 
@@ -403,7 +403,7 @@ class Model(nn.Module):
     def __call__(
         self,
         inputs: mx.array,
-        cache: Optional[Any] = None,
+        cache: Any | None = None,
     ) -> mx.array:
         out = self.model(inputs, cache)
         if self.args.tie_word_embeddings:

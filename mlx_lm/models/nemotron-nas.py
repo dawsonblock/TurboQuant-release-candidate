@@ -1,7 +1,7 @@
 # Copyright © 2025 Apple Inc.
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -110,7 +110,7 @@ class ModelArgs(BaseModelArgs):
     attention_bias: bool = False
     mlp_bias: bool = False
     rope_theta: float = 500000.0
-    rope_scaling: Optional[Dict[str, Union[float, str]]] = None
+    rope_scaling: Optional[dict[str, Union[float, str]]] = None
     max_position_embeddings: int = 131072
     tie_word_embeddings: bool = False
 
@@ -333,7 +333,7 @@ class NemotronNASModel(nn.Module):
     def __call__(
         self,
         inputs: mx.array,
-        cache: Optional[List[Any]] = None,
+        cache: Optional[list[Any]] = None,
     ):
         h = self.embed_tokens(inputs)
 

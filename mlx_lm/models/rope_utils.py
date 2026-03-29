@@ -1,7 +1,7 @@
 # Copyright © 2023-2024 Apple Inc.
 
 import math
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -14,8 +14,8 @@ class SuScaledRoPE(nn.Module):
         base: float = 10000.0,
         max_position_embeddings: int = 131072,
         original_max_position_embeddings: int = 4096,
-        short_factor: Union[List[float], float] = 1.0,
-        long_factor: Union[List[float], float] = 1.0,
+        short_factor: Union[list[float], float] = 1.0,
+        long_factor: Union[list[float], float] = 1.0,
         short_mscale: float = None,
         long_mscale: float = None,
     ):

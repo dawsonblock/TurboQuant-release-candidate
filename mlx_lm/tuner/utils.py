@@ -2,9 +2,7 @@
 import json
 import types
 from pathlib import Path
-from typing import Dict
 
-import mlx.core as mx
 import mlx.nn as nn
 import mlx.optimizers as opt
 from mlx.utils import tree_flatten, tree_unflatten
@@ -15,7 +13,7 @@ from .dora import DoRAEmbedding, DoRALinear
 from .lora import LoRAEmbedding, LoRALinear, LoRASwitchLinear
 
 
-def build_schedule(schedule_config: Dict):
+def build_schedule(schedule_config: dict):
     """
     Build a learning rate schedule from the given config.
     """
@@ -38,7 +36,7 @@ def build_schedule(schedule_config: Dict):
 def linear_to_lora_layers(
     model: nn.Module,
     num_layers: int,
-    config: Dict,
+    config: dict,
     use_dora: bool = False,
 ):
     """
@@ -124,7 +122,7 @@ def load_adapters(model: nn.Module, adapter_path: str) -> nn.Module:
     adapter_path = Path(adapter_path)
     if not adapter_path.exists():
         raise FileNotFoundError(f"The adapter path does not exist: {adapter_path}")
-    with open(adapter_path / "adapter_config.json", "r") as fid:
+    with open(adapter_path / "adapter_config.json") as fid:
         config = types.SimpleNamespace(**json.load(fid))
     fine_tune_type = getattr(config, "fine_tune_type", "lora")
     if fine_tune_type != "full":

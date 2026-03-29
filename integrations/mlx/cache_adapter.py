@@ -1,21 +1,23 @@
 from dataclasses import dataclass
-from typing import Optional, Any
+from typing import Optional
+
 import mlx.core as mx
 
 from mlx_lm.models.cache import _BaseCache, create_attention_mask
+from turboquant.config import TurboQuantConfig as _ProdTurboQuantConfig
+from turboquant.runtime.kv_interface import (
+    KVCompressor as _KVCompressor,
+)
 
 #   - TurboQuantConfig   (legacy field names: main_bits, group_size, ...)
 #   - TurboQuantKeysView (re-exported from production package)
 #   - TurboQuantKCache   (adapter; same attribute surface as the old class)
 # ---------------------------------------------------------------------------
-
 # Re-export the canonical view/compressor from the production package.
 # gemma.py and tests import TurboQuantKeysView from .cache (this module).
 from turboquant.runtime.kv_interface import (
     TurboQuantKeysView,
-    KVCompressor as _KVCompressor,
 )
-from turboquant.config import TurboQuantConfig as _ProdTurboQuantConfig
 
 
 @dataclass
@@ -51,11 +53,11 @@ def _to_prod_config(cfg: TurboQuantConfig) -> _ProdTurboQuantConfig:
         v_bits=cfg.v_bits,
         v_group_size=cfg.v_group_size,
         v_enabled=cfg.v_enabled,
-        rotation=cfg.rotation,
+        rotation=cfg.rotation,  # type: ignore
         residual_topk=cfg.residual_topk,
         block_tokens=cfg.block_tokens,
-        scale_dtype=cfg.scale_dtype,
-        v_scale_dtype=cfg.v_scale_dtype,
+        scale_dtype=cfg.scale_dtype,  # type: ignore
+        v_scale_dtype=cfg.v_scale_dtype,  # type: ignore
         eps=cfg.eps,
     )
 
@@ -120,7 +122,7 @@ class TurboQuantKCache(_BaseCache):
 
     @property
     def nbytes(self) -> int:
-        return self._impl.memory_breakdown()["total"]
+        return self._impl.memory_breakdown()["total"]  # type: ignore
 
     def storage_breakdown(self) -> dict:
         bd = self._impl.memory_breakdown()

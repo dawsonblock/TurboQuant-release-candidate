@@ -1,6 +1,7 @@
 from turboquant.config import TurboQuantConfig
+from turboquant.runtime.attention import maybe_turboquant_attention
 from turboquant.runtime.kv_interface import KVCompressor
-from turboquant.runtime.attention import attention_kernel, maybe_turboquant_attention
+
 
 class TurboQuantRuntime:
     def __init__(self, config: TurboQuantConfig):

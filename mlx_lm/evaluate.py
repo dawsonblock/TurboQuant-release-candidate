@@ -196,7 +196,7 @@ class MLXLM(LM):
             # compute truncation length
             max_tokens = self._max_tokens or DEFAULT_MAX_TOKENS
             truncation = max(0, max_completed_l - max_tokens - 1)
-            orig_prefix_l = len(prefix)
+            len(prefix)
             prefix_l = max(len(prefix) - truncation, 0)
             prefix = prefix[len(prefix) - prefix_l :]
 
@@ -216,7 +216,7 @@ class MLXLM(LM):
                 # The logprobs from the last token of the prompt are
                 # for the first input token
                 scores.append(logprobs[0, inputs[0]].item())
-                is_greedy.append((inputs[0] == max_idx))
+                is_greedy.append(inputs[0] == max_idx)
 
                 if len(inputs) == 1:
                     continue

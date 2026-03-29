@@ -6,9 +6,10 @@ from typing import Any, Optional
 import mlx.core as mx
 import mlx.nn as nn
 
-from .base import BaseModelArgs, create_attention_mask, scaled_dot_product_attention
-from turboquant.runtime.kv_interface import TurboQuantKeysView
 from turboquant.runtime.attention import turboquant_streaming_attention
+from turboquant.runtime.kv_interface import TurboQuantKeysView
+
+from .base import BaseModelArgs, create_attention_mask, scaled_dot_product_attention
 
 
 @dataclass

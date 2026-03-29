@@ -26,22 +26,19 @@ resolved to concrete operations at ``__init__`` time.
 """
 from __future__ import annotations
 
-from typing import Optional, Tuple
-
 import mlx.core as mx
-from turboquant.errors import TurboQuantShapeError
 
 from turboquant.config import TurboQuantConfig
-from turboquant.core.rotation import FixedRotation
 from turboquant.core.quantizer import (
     GroupScalarQuantizer,
-    dequantize_groups,
     build_caches,
+    dequantize_groups,
 )
 from turboquant.core.residual import (
     encode_topk_residual,
-    decode_topk_residual,
 )
+from turboquant.core.rotation import FixedRotation
+from turboquant.errors import TurboQuantShapeError
 
 
 def _round_up(n: int, multiple: int) -> int:
@@ -64,17 +61,17 @@ class TurboQuantPipeline:
         self.layer_id = layer_id
 
         # Quantisers — created lazily on first call (we don't know head_dim yet)
-        self._k_quant: Optional[GroupScalarQuantizer] = None
-        self._v_quant: Optional[GroupScalarQuantizer] = None
+        self._k_quant: GroupScalarQuantizer | None = None
+        self._v_quant: GroupScalarQuantizer | None = None
 
         # Rotation — created lazily (need head_dim)
         self._rotation_cache: dict[int, FixedRotation] = {}
 
         # Cached dims (set on first encode_k call)
-        self._d_head: Optional[int] = None
-        self._d_pad: Optional[int] = None
-        self._v_dim: Optional[int] = None
-        self._v_pad: Optional[int] = None
+        self._d_head: int | None = None
+        self._d_pad: int | None = None
+        self._v_dim: int | None = None
+        self._v_pad: int | None = None
 
     def build(self, d_head_k: int, d_head_v: int) -> None:
         """Pre-allocate all caches, quantizers, and rotations explicitely."""
@@ -82,7 +79,7 @@ class TurboQuantPipeline:
         self._get_k_quant()
         if self.config.v_enabled:
             self._get_v_quant()
-        
+
         # Build caches
         build_caches(self.config.k_bits)
         if self.config.v_enabled:
@@ -135,11 +132,11 @@ class TurboQuantPipeline:
 
     def encode_k(
         self, keys: mx.array
-    ) -> Tuple[
+    ) -> tuple[
         mx.array,
         mx.array,
-        Optional[mx.array],
-        Optional[mx.array],
+        mx.array | None,
+        mx.array | None,
     ]:
         """Encode keys: [B, H, T, D].
 
@@ -154,7 +151,7 @@ class TurboQuantPipeline:
         cfg = self.config
 
         self._bind_k_shape_once(D)
-        d_head, d_pad = self._d_head, self._d_pad
+        _d_head, d_pad = self._d_head, self._d_pad
 
         # Rotate
         rot = self._get_rotation(D)
@@ -175,7 +172,7 @@ class TurboQuantPipeline:
         resid_vals = resid_idx = None
         if cfg.residual_topk > 0:
             y_hat = dequantize_groups(
-                packed_k, k_scales, cfg.k_bits, cfg.k_group_size, d_pad
+                packed_k, k_scales, cfg.k_bits, cfg.k_group_size, d_pad  # type: ignore
             )
             residual = y_pad - y_hat
             resid_vals, resid_idx = encode_topk_residual(
@@ -190,16 +187,16 @@ class TurboQuantPipeline:
         self,
         packed_k: mx.array,
         k_scales: mx.array,
-        resid_vals: Optional[mx.array],
-        resid_idx: Optional[mx.array],
+        resid_vals: mx.array | None,
+        resid_idx: mx.array | None,
     ) -> mx.array:
         """Decode packed K → rotated space [..., d_head].
-        
+
         The output stays in the rotated coordinate frame so that attention
         can be computed with correspondingly-rotated queries.
         """
         from turboquant.kernels.decode import decode_k_block
-        
+
         return decode_k_block(
             packed_k,
             k_scales,
@@ -213,12 +210,11 @@ class TurboQuantPipeline:
 
     def encode_v(
         self, values: mx.array
-    ) -> Tuple[mx.array, mx.array]:
+    ) -> tuple[mx.array, mx.array]:
         """Encode values: [B, H, T, D] → (packed_v, v_scales).
 
         No rotation, no residual.
         """
-        cfg = self.config
         B, H, T, D = values.shape
 
         self._bind_v_shape_once(D)

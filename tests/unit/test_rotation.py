@@ -16,7 +16,6 @@ import pytest
 
 from turboquant.core.rotation import FixedRotation
 
-
 ATOL = 1e-4
 
 

@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Optional, Tuple
+from typing import Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -132,7 +132,7 @@ def _gated_delta_step_ops(
     beta: mx.array,
     state: mx.array,
     mask: Optional[mx.array] = None,
-) -> Tuple[mx.array, mx.array]:
+) -> tuple[mx.array, mx.array]:
     """
     Ops-based reference implementation for a single recurrent step.
 
@@ -178,7 +178,7 @@ def gated_delta_kernel(
     beta: mx.array,
     state: mx.array,
     mask: Optional[mx.array] = None,
-) -> Tuple[mx.array, mx.array]:
+) -> tuple[mx.array, mx.array]:
     B, T, Hk, Dk = k.shape
     Hv, Dv = v.shape[2:]
     input_type = q.dtype
@@ -219,7 +219,7 @@ def gated_delta_ops(
     beta: mx.array,
     state: Optional[mx.array] = None,
     mask: Optional[mx.array] = None,
-) -> Tuple[mx.array, mx.array]:
+) -> tuple[mx.array, mx.array]:
     """
     Ops-based reference implementation for prompt prefill (sequential loop).
     Supports both scalar and vectorized gating.
@@ -270,7 +270,7 @@ def gated_delta_update(
     state: Optional[mx.array] = None,
     mask: Optional[mx.array] = None,
     use_kernel: bool = True,
-) -> Tuple[mx.array, mx.array]:
+) -> tuple[mx.array, mx.array]:
 
     beta = mx.sigmoid(b)
     g = compute_g(A_log, a, dt_bias)

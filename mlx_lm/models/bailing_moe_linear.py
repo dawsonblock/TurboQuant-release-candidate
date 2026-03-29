@@ -2,7 +2,7 @@
 
 import math
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -38,7 +38,7 @@ class ModelArgs(BaseModelArgs):
     first_k_dense_replace: int
     layer_group_size: int
     group_norm_size: int
-    rope_scaling: Optional[Dict[str, Union[float, str]]] = None
+    rope_scaling: Optional[dict[str, Union[float, str]]] = None
     rope_traditional: bool = False
     use_bias: bool = False
     use_qkv_bias: bool = False
@@ -75,8 +75,8 @@ def recurrent_gla(
     Returns y with shape [B, H, T, Dv].
     """
     B, Hq, L, K = q.shape
-    Hv = k.shape[1]
-    V = v.shape[-1]
+    k.shape[1]
+    v.shape[-1]
 
     outputs = []
     exp_g = mx.exp(g)[:, None, None].astype(q.dtype)
@@ -104,7 +104,6 @@ class GroupRMSNorm(nn.Module):
         self.eps = eps
 
     def __call__(self, x: mx.array) -> mx.array:
-        shape = x.shape
         x = mx.unflatten(x, axis=-1, shape=(self.groups, -1))
         x = mx.fast.rms_norm(x, weight=None, eps=self.eps)
         return self.weight * mx.flatten(x, -2)
@@ -334,7 +333,7 @@ def group_expert_select(
     routed_scaling_factor: float,
     norm_topk_prob: bool,
     score_function: str,
-) -> Tuple[mx.array, mx.array]:
+) -> tuple[mx.array, mx.array]:
     in_type = gates.dtype
     if score_function == "sigmoid":
         scores = mx.sigmoid(gates.astype(mx.float32))

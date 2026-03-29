@@ -8,10 +8,10 @@ KVCompressor              — drop-in KV cache with compress/decompress
 TurboQuantPipeline        — low-level encode/decode pipeline
 calibrate                 — calibration pass over representative data
 """
+from turboquant.calibration.fit_quantizer import calibrate
 from turboquant.config import TurboQuantConfig
 from turboquant.core.pipeline import TurboQuantPipeline
 from turboquant.runtime.kv_interface import KVCompressor
-from turboquant.calibration.fit_quantizer import calibrate
 
 __all__ = [
     "TurboQuantConfig",

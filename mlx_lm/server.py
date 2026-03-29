@@ -10,22 +10,18 @@ import time
 import uuid
 import warnings
 from collections import deque
-from dataclasses import dataclass, field
+from collections.abc import Sequence
+from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
 from queue import Empty as QueueEmpty
 from queue import Queue
-from threading import Condition, Lock, Thread
+from threading import Thread
 from typing import (
     Any,
     Callable,
-    Dict,
-    List,
     Literal,
     NamedTuple,
     Optional,
-    Sequence,
-    Tuple,
     Union,
 )
 
@@ -57,9 +53,9 @@ class StopCondition(NamedTuple):
 
 
 def stopping_criteria(
-    tokens: List[int],
-    stop_id_sequences: List[List[int]],
-    stop_words: List[str],
+    tokens: list[int],
+    stop_id_sequences: list[list[int]],
+    stop_words: list[str],
     eos_token_id: Union[int, None],
 ) -> StopCondition:
     """
@@ -113,7 +109,7 @@ def sequence_overlap(s1: Sequence, s2: Sequence) -> bool:
     return any(s1[-i:] == s2[:i] for i in range(1, max_overlap + 1))
 
 
-def convert_chat(messages: List[dict], role_mapping: Optional[dict] = None):
+def convert_chat(messages: list[dict], role_mapping: Optional[dict] = None):
     default_role_mapping = {
         "system_prompt": (
             "A chat between a curious user and an artificial intelligence "
@@ -170,15 +166,15 @@ class LRUPromptCache:
 
     @dataclass
     class CacheEntry:
-        prompt_cache: List[Any]
+        prompt_cache: list[Any]
         count: int
 
     @dataclass
     class SearchResult:
         model: Any
-        exact: List[int]
-        shorter: List[int]
-        longer: List[int]
+        exact: list[int]
+        shorter: list[int]
+        longer: list[int]
         common_prefix: int
 
     def __init__(self, max_size: int = 10):
@@ -322,7 +318,7 @@ class SamplingArguments:
 
 @dataclass
 class LogitsProcessorArguments:
-    logit_bias: Optional[Dict[int, float]]
+    logit_bias: Optional[dict[int, float]]
     repetition_penalty: float
     repetition_context_size: int
 
@@ -333,7 +329,7 @@ class GenerationArguments:
     sampling: SamplingArguments
     logits: LogitsProcessorArguments
 
-    stop_words: List[str]
+    stop_words: list[str]
 
     max_tokens: int
     num_draft_tokens: int
@@ -347,9 +343,9 @@ class CompletionRequest:
 
     prompt: str
 
-    messages: List[Any]
-    tools: Optional[List[Any]]
-    role_mapping: Optional[Dict[str, Any]]
+    messages: list[Any]
+    tools: Optional[list[Any]]
+    role_mapping: Optional[dict[str, Any]]
 
 
 @dataclass
@@ -358,8 +354,8 @@ class GenerationContext:
     tool_call_start: str
     tool_call_end: str
     eos_token_id: int
-    stop_token_sequences: List[List[int]]
-    prompt: List[int]
+    stop_token_sequences: list[list[int]]
+    prompt: list[int]
 
     _should_stop: bool = False
 
@@ -373,7 +369,7 @@ class Response:
     token: int
     logprob: float
     finish_reason: Optional[str]
-    top_tokens: Optional[Tuple[int, float]]
+    top_tokens: Optional[tuple[int, float]]
 
 
 class ModelProvider:
@@ -1013,11 +1009,11 @@ class APIHandler(BaseHTTPRequestHandler):
             isinstance(self.xtc_probability, float)
             and 0.00 <= self.xtc_probability <= 1.00
         ):
-            raise ValueError(f"xtc_probability must be a float between 0.00 and 1.00")
+            raise ValueError("xtc_probability must be a float between 0.00 and 1.00")
         if not (
             isinstance(self.xtc_threshold, float) and 0.00 <= self.xtc_threshold <= 0.50
         ):
-            raise ValueError(f"xtc_threshold must be a float between 0.00 and 0.5")
+            raise ValueError("xtc_threshold must be a float between 0.00 and 0.5")
         if not isinstance(self.requested_model, str):
             raise ValueError("model must be a string")
         if self.adapter is not None and not isinstance(self.adapter, str):
@@ -1031,10 +1027,10 @@ class APIHandler(BaseHTTPRequestHandler):
         finish_reason: Union[Literal["length", "stop"], None],
         prompt_token_count: Optional[int] = None,
         completion_token_count: Optional[int] = None,
-        token_logprobs: Optional[List[float]] = None,
-        top_tokens: Optional[List[Dict[int, float]]] = None,
-        tokens: Optional[List[int]] = None,
-        tool_calls: Optional[List[str]] = None,
+        token_logprobs: Optional[list[float]] = None,
+        top_tokens: Optional[list[dict[int, float]]] = None,
+        tokens: Optional[list[int]] = None,
+        tool_calls: Optional[list[str]] = None,
     ) -> dict:
         """
         Generate a single response packet based on response type (stream or
@@ -1128,7 +1124,7 @@ class APIHandler(BaseHTTPRequestHandler):
 
         return response
 
-    def handle_completion(self, request: CompletionRequest, stop_words: List[str]):
+    def handle_completion(self, request: CompletionRequest, stop_words: list[str]):
         """
         Generate a response to a prompt and send it to the client in a single batch.
 
@@ -1261,10 +1257,10 @@ class APIHandler(BaseHTTPRequestHandler):
                 # If the end of tokens overlaps with a stop sequence, generate new
                 # tokens until we know if the stop sequence is hit or not
                 if any(
-                    (
+
                         sequence_overlap(tokens, sequence)
                         for sequence in ctx.stop_token_sequences
-                    )
+
                 ):
                     continue
                 elif segment or tool_calls:
@@ -1289,7 +1285,7 @@ class APIHandler(BaseHTTPRequestHandler):
                 response = self.completion_usage_response(len(ctx.prompt), len(tokens))
                 self.wfile.write(f"data: {json.dumps(response)}\n\n".encode())
                 self.wfile.flush()
-            self.wfile.write("data: [DONE]\n\n".encode())
+            self.wfile.write(b"data: [DONE]\n\n")
             self.wfile.flush()
         else:
             response = self.generate_response(
@@ -1393,7 +1389,7 @@ class APIHandler(BaseHTTPRequestHandler):
         self._set_completion_headers(200)
         self.end_headers()
 
-        self.wfile.write('{"status": "ok"}'.encode())
+        self.wfile.write(b'{"status": "ok"}')
         self.wfile.flush()
 
     def handle_models_request(self):

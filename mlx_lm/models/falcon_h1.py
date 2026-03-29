@@ -1,7 +1,7 @@
 # Copyright © 2025 Apple Inc.
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -45,7 +45,7 @@ class ModelArgs(BaseModelArgs):
     max_position_embeddings: int = 131072
     mlp_bias: bool = False
     mlp_expansion_factor: int = 8
-    mlp_multipliers: List[float] = field(
+    mlp_multipliers: list[float] = field(
         default_factory=lambda: [0.8838834764831844, 0.5859375]
     )
     model_type: str = "falcon_h1"
@@ -58,7 +58,7 @@ class ModelArgs(BaseModelArgs):
     rope_scaling: Optional[float] = None
     rope_theta: float = 100000000000.0
     ssm_in_multiplier: float = 1.25
-    ssm_multipliers: List[float] = field(
+    ssm_multipliers: list[float] = field(
         default_factory=lambda: [
             0.3535533905932738,
             0.25,

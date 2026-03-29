@@ -1,8 +1,8 @@
-from turboquant.runtime.kv_interface import TurboQuantKeysView
-import pytest
 import mlx.core as mx
+
 from turboquant import TurboQuantConfig
-from turboquant.runtime.kv_interface import KVCompressor
+from turboquant.runtime.kv_interface import KVCompressor, TurboQuantKeysView
+
 
 def test_cache_contract_initialization():
     config = TurboQuantConfig()

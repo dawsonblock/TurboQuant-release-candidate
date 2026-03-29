@@ -1,7 +1,7 @@
 # Copyright © 2023-2025 Apple Inc.
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -31,7 +31,7 @@ class ModelArgs(BaseModelArgs):
     attention_bias: bool = False
     rope_theta: float = 1000000.0
     rope_traditional: bool = False
-    rope_scaling: Optional[Dict[str, Union[str, float]]] = None
+    rope_scaling: Optional[dict[str, Union[str, float]]] = None
     tie_word_embeddings: bool = False
 
 
@@ -97,7 +97,7 @@ class Attention(nn.Module):
         self,
         x: mx.array,
         mask: Optional[mx.array] = None,
-        cache: Optional[Dict[str, mx.array]] = None,
+        cache: Optional[dict[str, mx.array]] = None,
     ):
         B, L, _ = x.shape
 

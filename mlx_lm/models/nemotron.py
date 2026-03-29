@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -28,19 +28,19 @@ class ModelArgs(BaseModelArgs):
     partial_rotary_factor: float = 0.5
     rope_theta: float = 10000.0
     rope_traditional: bool = False
-    rope_scaling: Optional[Dict[str, Union[float, str]]] = None
+    rope_scaling: Optional[dict[str, Union[float, str]]] = None
     tie_word_embeddings: bool = False
 
     def __post_init__(self):
         if self.rope_scaling:
-            if not "factor" in self.rope_scaling:
-                raise ValueError(f"rope_scaling must contain 'factor'")
+            if "factor" not in self.rope_scaling:
+                raise ValueError("rope_scaling must contain 'factor'")
             rope_type = self.rope_scaling.get("type") or self.rope_scaling.get(
                 "rope_type"
             )
             if rope_type is None:
                 raise ValueError(
-                    f"rope_scaling must contain either 'type' or 'rope_type'"
+                    "rope_scaling must contain either 'type' or 'rope_type'"
                 )
             if rope_type not in ["linear"]:
                 raise ValueError("rope_scaling 'type' currently only supports 'linear'")

@@ -1,6 +1,5 @@
 # Copyright © 2025 Apple Inc.
 
-import mlx.core as mx
 
 
 class PipelineMixin:

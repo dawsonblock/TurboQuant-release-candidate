@@ -1,9 +1,7 @@
 # Copyright © 2025 Apple Inc.
 
-import math
 from dataclasses import dataclass
-from functools import partial
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -35,7 +33,7 @@ class ModelArgs(BaseModelArgs):
     num_key_value_heads: int
     rms_norm_eps: float
     rope_theta: float
-    rope_scaling: Optional[Dict]
+    rope_scaling: Optional[dict]
     use_qk_norm: bool
     tie_word_embeddings: bool
     attention_bias: bool

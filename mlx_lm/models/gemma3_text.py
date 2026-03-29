@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -29,7 +29,7 @@ class ModelArgs(BaseModelArgs):
     sliding_window: int = 512
     sliding_window_pattern: int = 6
     max_position_embeddings: int = 32768
-    rope_scaling: Dict = None
+    rope_scaling: dict = None
 
 
 class Attention(nn.Module):

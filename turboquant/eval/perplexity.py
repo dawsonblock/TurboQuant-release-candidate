@@ -23,7 +23,6 @@ Typical usage
 from __future__ import annotations
 
 import math
-from typing import Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -102,11 +101,10 @@ def perplexity_report(
     mx.eval(dense_logits)
     dense_ppl = perplexity_from_logits(dense_logits, targets)
 
-    tq_ppl: Optional[float] = None
+    tq_ppl: float | None = None
     if turboquant_config is not None:
-        from mlx_lm.models.cache import make_prompt_cache
-        from integrations.mlx.cache_adapter import TurboQuantKCache
         from integrations.mlx.upgrade import upgrade_cache_list
+        from mlx_lm.models.cache import make_prompt_cache
 
         tq_cache = make_prompt_cache(model)
         upgrade_cache_list(tq_cache, k_start=k_start, config=turboquant_config)

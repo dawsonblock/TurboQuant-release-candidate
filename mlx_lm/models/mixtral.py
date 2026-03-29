@@ -1,7 +1,7 @@
 # Copyright © 2023-2024 Apple Inc.
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -24,7 +24,7 @@ class ModelArgs(BaseModelArgs):
     rms_norm_eps: float = 1e-5
     rope_theta: float = 1e6
     rope_traditional: bool = False
-    rope_scaling: Optional[Dict[str, Union[float, str]]] = None
+    rope_scaling: Optional[dict[str, Union[float, str]]] = None
 
     def __post_init__(self):
         if self.num_key_value_heads is None:

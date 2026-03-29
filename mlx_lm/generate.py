@@ -7,15 +7,12 @@ import json
 import sys
 import time
 import warnings
+from collections.abc import Generator
 from dataclasses import dataclass
-from functools import partial
 from typing import (
     Any,
     Callable,
-    Generator,
-    List,
     Optional,
-    Tuple,
     Union,
 )
 
@@ -35,7 +32,6 @@ from .models.cache import (
     RotatingKVCache,
     load_prompt_cache,
 )
-from integrations.mlx.cache_adapter import TurboQuantKCache
 from .sample_utils import make_sampler
 from .tokenizer_utils import TokenizerWrapper
 from .utils import does_model_support_input_embeddings, load
@@ -220,7 +216,7 @@ generation_stream = mx.new_stream(mx.default_device())
 
 
 @contextlib.contextmanager
-def wired_limit(model: nn.Module, streams: Optional[List[mx.Stream]] = None):
+def wired_limit(model: nn.Module, streams: Optional[list[mx.Stream]] = None):
     """
     A context manager to temporarily change the wired limit.
 
@@ -319,8 +315,8 @@ def maybe_turboquant_k_cache(
         :class:`turboquant.config.TurboQuantConfig` and call
         :func:`integrations.mlx.upgrade.upgrade_cache_list` directly.
     """
-    from turboquant.config import TurboQuantConfig as _TQConfig
     from integrations.mlx.upgrade import upgrade_cache_list
+    from turboquant.config import TurboQuantConfig as _TQConfig
 
     if turboquant_k_start is None:
         return
@@ -372,7 +368,7 @@ def generate_step(
     *,
     max_tokens: int = 256,
     sampler: Optional[Callable[[mx.array], mx.array]] = None,
-    logits_processors: Optional[List[Callable[[mx.array, mx.array], mx.array]]] = None,
+    logits_processors: Optional[list[Callable[[mx.array, mx.array], mx.array]]] = None,
     max_kv_size: Optional[int] = None,
     prompt_cache: Optional[Any] = None,
     prefill_step_size: int = 2048,
@@ -393,7 +389,7 @@ def generate_step(
     turboquant_v_group_size: int = 64,
     turboquant_v_enabled: bool = True,
     turboquant_block_tokens: int = 256,
-) -> Generator[Tuple[mx.array, mx.array], None, None]:
+) -> Generator[tuple[mx.array, mx.array], None, None]:
     """
     A generator producing token ids based on the given prompt from the model.
 
@@ -567,13 +563,13 @@ def speculative_generate_step(
     num_draft_tokens: int = 2,
     max_tokens: int = 256,
     sampler: Optional[Callable[[mx.array], mx.array]] = None,
-    logits_processors: Optional[List[Callable[[mx.array, mx.array], mx.array]]] = None,
+    logits_processors: Optional[list[Callable[[mx.array, mx.array], mx.array]]] = None,
     prompt_cache: Optional[Any] = None,
     prefill_step_size: int = 512,
     kv_bits: Optional[int] = None,
     kv_group_size: int = 64,
     quantized_kv_start: int = 0,
-) -> Generator[Tuple[mx.array, mx.array, bool], None, None]:
+) -> Generator[tuple[mx.array, mx.array, bool], None, None]:
     """
     A generator producing token ids based on the given prompt from the model.
 
@@ -737,7 +733,7 @@ def speculative_generate_step(
 def stream_generate(
     model: nn.Module,
     tokenizer: Union[PreTrainedTokenizer, TokenizerWrapper],
-    prompt: Union[str, mx.array, List[int]],
+    prompt: Union[str, mx.array, list[int]],
     max_tokens: int = 256,
     draft_model: Optional[nn.Module] = None,
     **kwargs,
@@ -836,7 +832,7 @@ def stream_generate(
 def generate(
     model: nn.Module,
     tokenizer: Union[PreTrainedTokenizer, TokenizerWrapper],
-    prompt: Union[str, List[int]],
+    prompt: Union[str, list[int]],
     verbose: bool = False,
     **kwargs,
 ) -> str:
@@ -925,24 +921,24 @@ class BatchResponse:
         stats (BatchStats): Statistics about the generation.
     """
 
-    texts: List[str]
+    texts: list[str]
     stats: BatchStats
-    caches: Optional[List[List[Any]]]
+    caches: Optional[list[list[Any]]]
 
 
 @dataclass
 class Batch:
-    uids: List[int]
+    uids: list[int]
     y: mx.array
     logprobs: mx.array
-    max_tokens: List[int]
-    num_tokens: List[int]
-    cache: List[Any]
+    max_tokens: list[int]
+    num_tokens: list[int]
+    cache: list[Any]
 
     def __len__(self):
         return len(self.uids)
 
-    def filter(self, keep_idx: List[int]):
+    def filter(self, keep_idx: list[int]):
         self.uids = [self.uids[k] for k in keep_idx]
         self.logprobs = [self.logprobs[k] for k in keep_idx]
         self.max_tokens = [self.max_tokens[k] for k in keep_idx]
@@ -1017,7 +1013,7 @@ class BatchGenerator:
         token: int
         logprobs: mx.array
         finish_reason: Optional[str]
-        prompt_cache: Callable[[], List[Any]]
+        prompt_cache: Callable[[], list[Any]]
 
     def __init__(
         self,
@@ -1029,7 +1025,7 @@ class BatchGenerator:
         prefill_batch_size: int = 8,
         prefill_step_size: int = 2048,
         prompt_progress_callback: Optional[
-            Callable[[List[Tuple[int, int, int]]], None]
+            Callable[[list[tuple[int, int, int]]], None]
         ] = None,
     ):
         self.model = model
@@ -1063,7 +1059,7 @@ class BatchGenerator:
         self.close()
 
     def insert(
-        self, prompts, max_tokens: Union[List[int], int, None] = None, caches=None
+        self, prompts, max_tokens: Union[list[int], int, None] = None, caches=None
     ):
         uids = []
 
@@ -1086,7 +1082,7 @@ class BatchGenerator:
         )
         return uids
 
-    def remove(self, uids: List[int]):
+    def remove(self, uids: list[int]):
         uids = set(uids)
         if self.active_batch is not None:
             batch = self.active_batch
@@ -1173,7 +1169,7 @@ class BatchGenerator:
             list(uids), y, logprobs, list(max_tokens), [0] * len(uids), prompt_cache
         )
 
-    def _step(self, input_tokens: mx.array, prompt_cache: List[Any]):
+    def _step(self, input_tokens: mx.array, prompt_cache: list[Any]):
         logits = self.model(input_tokens, cache=prompt_cache)
         logits = logits[:, -1, :]
         logprobs = logits - mx.logsumexp(logits, axis=-1, keepdims=True)
@@ -1277,9 +1273,9 @@ class BatchGenerator:
 def batch_generate(
     model,
     tokenizer,
-    prompts: List[int],
-    prompt_caches: Optional[List[List[Any]]] = None,
-    max_tokens: Union[int, List[int]] = 128,
+    prompts: list[int],
+    prompt_caches: Optional[list[list[Any]]] = None,
+    max_tokens: Union[int, list[int]] = 128,
     verbose: bool = False,
     return_prompt_caches: bool = False,
     **kwargs,

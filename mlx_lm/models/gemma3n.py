@@ -3,7 +3,7 @@
 import math
 from dataclasses import dataclass
 from functools import partial
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -31,15 +31,15 @@ class TextConfig(BaseModelArgs):
     rope_local_base_freq: float
     rope_theta: float
     final_logit_softcapping: float
-    layer_types: List[str]
-    activation_sparsity_pattern: List[float]
+    layer_types: list[str]
+    activation_sparsity_pattern: list[float]
     hidden_size_per_layer_input: int
     altup_num_inputs: int
     altup_coef_clip: float
     altup_correct_scale: bool
     altup_active_idx: int
     laurel_rank: int
-    rope_scaling: Optional[Dict] = None
+    rope_scaling: Optional[dict] = None
 
 
 @dataclass

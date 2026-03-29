@@ -9,10 +9,10 @@ the state dict through ``validate_state`` before restoring a compressor.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
-from turboquant.errors import TurboQuantStateError
+from typing import Any
 
 from turboquant.config import TurboQuantConfig
+from turboquant.errors import TurboQuantStateError
 
 STATE_SCHEMA_VERSION: int = 2
 """Integer version of the KVCompressor state dict format.
@@ -39,15 +39,15 @@ _CONFIG_KEYS_V2 = frozenset(
 )
 
 
-def _shape_token_len(arr) -> Optional[int]:
+def _shape_token_len(arr) -> int | None:
     if arr is None or not hasattr(arr, "shape"):
         return None
     if len(arr.shape) < 3:
         return None
-    return arr.shape[2]
+    return arr.shape[2]  # type: ignore
 
 
-def _expect_config_match(state: Dict[str, Any], config: TurboQuantConfig) -> None:
+def _expect_config_match(state: dict[str, Any], config: TurboQuantConfig) -> None:
     mismatches = []
     checks = {
         "k_bits": config.k_bits,
@@ -76,8 +76,8 @@ def _expect_config_match(state: Dict[str, Any], config: TurboQuantConfig) -> Non
 
 
 def validate_state(
-    state: Dict[str, Any],
-    config: Optional[TurboQuantConfig] = None,
+    state: dict[str, Any],
+    config: TurboQuantConfig | None = None,
 ) -> None:
     """Raise ``TurboQuantStateError`` if *state* is not a valid KVCompressor state dict."""
     if "schema_version" not in state:

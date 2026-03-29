@@ -1,7 +1,7 @@
 # Copyright © 2023-2025 Apple Inc.
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -23,7 +23,7 @@ class ModelArgs(BaseModelArgs):
     max_position_embeddings: int = 32768
     rope_theta: float = 10000.0
     rope_traditional: bool = False
-    rope_scaling: Optional[Dict[str, Union[float, str]]] = None
+    rope_scaling: Optional[dict[str, Union[float, str]]] = None
     tie_word_embeddings: bool = False
     num_nextn_predict_layers: int = 2
 

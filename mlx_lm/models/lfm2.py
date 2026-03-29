@@ -1,6 +1,6 @@
 # Copyright © 2025 Apple Inc.
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -32,8 +32,8 @@ class ModelArgs(BaseModelArgs):
     block_ffn_dim_multiplier: float
     block_auto_adjust_ff_dim: bool
     rope_theta: float
-    full_attn_idxs: Optional[List[int]] = None
-    layer_types: Optional[List[str]] = None
+    full_attn_idxs: Optional[list[int]] = None
+    layer_types: Optional[list[str]] = None
 
     def __post_init__(self):
         if self.num_key_value_heads is None:

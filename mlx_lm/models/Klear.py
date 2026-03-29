@@ -1,7 +1,7 @@
 # Copyright © 2025 Apple Inc.
 
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -18,7 +18,7 @@ class ModelArgs(BaseModelArgs):
     intermediate_size: int
     num_attention_heads: int
     attention_bias: bool
-    mlp_only_layers: List[int]
+    mlp_only_layers: list[int]
     num_experts: int
     num_experts_per_tok: int
     decoder_sparse_step: int

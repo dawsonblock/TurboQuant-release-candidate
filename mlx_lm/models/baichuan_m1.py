@@ -1,7 +1,7 @@
 # Copyright © 2025 Apple Inc.
 
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -20,7 +20,7 @@ class ModelArgs(BaseModelArgs):
     num_key_value_heads: int
     rope_theta: float
     sliding_window: int
-    sliding_window_layers: List[int]
+    sliding_window_layers: list[int]
     conv_window: int
     rms_norm_eps: float
     model_type: str = "baichuan_m1"
@@ -218,7 +218,7 @@ class Model(nn.Module):
         if not config.tie_word_embeddings:
             self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
 
-    def make_cache(self) -> List[Any]:
+    def make_cache(self) -> list[Any]:
         caches = []
         for i, layer in enumerate(self.model.layers):
             is_swa = i in self.config.sliding_window_layers
@@ -246,5 +246,5 @@ class Model(nn.Module):
         return self.lm_head(outputs)
 
     @property
-    def layers(self) -> List[nn.Module]:
+    def layers(self) -> list[nn.Module]:
         return self.model.layers

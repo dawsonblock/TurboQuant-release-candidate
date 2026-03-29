@@ -1,4 +1,3 @@
-import glob
 import os
 
 files_to_check = [
@@ -14,17 +13,17 @@ files_to_check = [
 
 for file_path in files_to_check:
     if os.path.exists(file_path):
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             text = f.read()
-        
+
         # Replace module name
         new_text = text.replace("mlx_lm.cache_upgrade", "integrations.mlx.upgrade")
-        
+
         # Replace TurboQuantKCache for production path (not the legacy adapter references if any, but replace in standard mentions where we mean KVCompressor)
         if file_path == "docs/integration.md":
             new_text = new_text.replace("KVCache with TurboQuantKCache", "KVCache with KVCompressor")
             new_text = new_text.replace("— TurboQuantKCache is fully", "— KVCompressor is fully")
-            
+
         if text != new_text:
             with open(file_path, "w") as f:
                 f.write(new_text)

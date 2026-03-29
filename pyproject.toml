@@ -91,6 +91,7 @@ exclude = [
     ".venv",
     "build",
     "dist",
+    "mlx_lm",
 ]
 
 [tool.ruff.lint]
@@ -103,3 +104,6 @@ ignore = []
 [[tool.mypy.overrides]]
 module = "mlx_lm.*"
 
+ignore_errors = true
+"benchmarks/*" = ["E402", "E701"]
+"integrations/mlx/upgrade.py" = ["F821"]

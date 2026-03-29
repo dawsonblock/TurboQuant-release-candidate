@@ -1,16 +1,17 @@
 # Copyright © 2023-2024 Apple Inc.
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
 
+from turboquant.runtime.attention import turboquant_streaming_attention
+from turboquant.runtime.kv_interface import TurboQuantKeysView
+
 from .base import BaseModelArgs, create_attention_mask, scaled_dot_product_attention
 from .cache import KVCache, RotatingKVCache
-from turboquant.runtime.kv_interface import TurboQuantKeysView
 from .rope_utils import initialize_rope
-from turboquant.runtime.attention import turboquant_streaming_attention
 
 
 @dataclass
@@ -29,9 +30,9 @@ class ModelArgs(BaseModelArgs):
     mlp_bias: bool = False
     rope_theta: float = 10000
     rope_traditional: bool = False
-    rope_scaling: Optional[Dict[str, Union[float, str]]] = None
+    rope_scaling: Optional[dict[str, Union[float, str]]] = None
     tie_word_embeddings: bool = True
-    layer_types: Optional[List[str]] = None
+    layer_types: Optional[list[str]] = None
     sliding_window: Optional[int] = None
 
     def __post_init__(self):

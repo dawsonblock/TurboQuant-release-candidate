@@ -3,9 +3,7 @@
 import argparse
 import copy
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any, Callable, Dict
-from urllib import request
+from typing import Any, Callable
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -106,7 +104,7 @@ deepseek_v2_awq = AWQConfig(
         ScaleConfig(
             prev="mlp.up_proj",
             layers=["mlp.down_proj"],
-            use_config=lambda block: not "switch_mlp" in block.mlp,
+            use_config=lambda block: "switch_mlp" not in block.mlp,
         ),
         ScaleConfig(
             prev="mlp.shared_experts.up_proj",
@@ -123,7 +121,7 @@ deepseek_v2_awq = AWQConfig(
             block="mlp",
             prev="post_attention_layernorm",
             layers=["gate_proj", "up_proj"],
-            use_config=lambda block: not "switch_mlp" in block.mlp,
+            use_config=lambda block: "switch_mlp" not in block.mlp,
         ),
         ScaleConfig(
             block="mlp",
@@ -512,7 +510,7 @@ def awq_quantize(
 
 def update_config(
     model: nn.Module,
-    config: Dict[str, Any],
+    config: dict[str, Any],
 ):
     # dummy
     config["quantization"] = {"group_size": 64, "bits": 4}

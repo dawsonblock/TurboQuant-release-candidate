@@ -26,12 +26,11 @@ directly by model files.
 """
 from __future__ import annotations
 
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 import mlx.core as mx
 
 from turboquant.runtime.kv_interface import TurboQuantKeysView
-
 
 # ── GQA broadcast ─────────────────────────────────────────────────────────────
 
@@ -110,14 +109,14 @@ def _streaming_softmax_attention(
     # Online-softmax state
     m   = mx.full((B, H_q, L_q, 1), -1e30, dtype=mx.float32)
     lse = mx.zeros((B, H_q, L_q, 1), dtype=mx.float32)
-    acc: Optional[mx.array] = None
+    acc: mx.array | None = None
 
     for s, e, k_rot_blk, v_blk in cache.iter_rotated_kv_blocks(keys_view):
         k_rot_blk = _expand_kv_heads(k_rot_blk, H_q)
         v_blk     = _expand_kv_heads(v_blk,     H_q)
 
-        qf = q_rot.astype(mx.float32)
-        kf = k_rot_blk.astype(mx.float32)
+        q_rot.astype(mx.float32)
+        k_rot_blk.astype(mx.float32)
         vf = v_blk.astype(mx.float32)
 
         # [B, H_q, L_q, blk_len]
@@ -195,7 +194,7 @@ def maybe_turboquant_attention(
     queries: mx.array,
     keys: Any,
     values: mx.array,
-    mask: Optional[mx.array],
+    mask: mx.array | None,
     scale: float,
     fallback: Callable,
     cache: Any = None,

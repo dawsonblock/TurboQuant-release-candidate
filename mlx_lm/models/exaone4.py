@@ -1,7 +1,7 @@
 # Copyright © 2023-2024 Apple Inc.
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -25,7 +25,7 @@ class ModelArgs(BaseModelArgs):
     rope_theta: float
     head_dim: int
     tie_word_embeddings: bool
-    rope_scaling: Dict[str, Union[float, str]]
+    rope_scaling: dict[str, Union[float, str]]
     sliding_window: Optional[int]
     sliding_window_pattern: Optional[str]
 

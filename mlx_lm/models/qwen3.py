@@ -1,7 +1,7 @@
 # Copyright © 2023-2024 Apple Inc.
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -24,7 +24,7 @@ class ModelArgs(BaseModelArgs):
     rope_theta: float
     head_dim: int
     tie_word_embeddings: bool
-    rope_scaling: Optional[Dict[str, Union[float, str]]] = None
+    rope_scaling: Optional[dict[str, Union[float, str]]] = None
 
 
 class Attention(nn.Module):

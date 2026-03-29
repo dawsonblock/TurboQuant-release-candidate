@@ -7,7 +7,6 @@ import math
 
 import mlx.core as mx
 import mlx.nn as nn
-import numpy as np
 from mlx.utils import tree_flatten, tree_map, tree_unflatten
 from tqdm import tqdm
 
@@ -129,7 +128,8 @@ def estimate_threshold(
     tolerance = 1e-3 * (max_threshold - min_threshold)
     while (max_threshold - min_threshold) > tolerance:
         mid = (max_threshold + min_threshold) / 2
-        class_predicate = lambda p, m: predicate(p, m, mid)
+        def class_predicate(p, m):
+            return predicate(p, m, mid)
         q_model = copy.deepcopy(model)
         nn.quantize(
             q_model,
@@ -184,7 +184,7 @@ def main():
     )
     args = parser.parse_args()
 
-    group = mx.distributed.init()
+    mx.distributed.init()
     model, tokenizer, config = load(args.model, return_config=True)
 
     if args.sensitivities is None:
@@ -205,7 +205,7 @@ def main():
         with open(f"{model_name}_sensitivities.json", "w") as fid:
             json.dump(sensitivities, fid)
     else:
-        with open(args.sensitivities, "r") as fid:
+        with open(args.sensitivities) as fid:
             sensitivities = json.load(fid)
 
     sensitivities = dict(sensitivities)

@@ -1,7 +1,7 @@
 # Copyright © 2025 Apple Inc.
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -20,7 +20,7 @@ class ModelArgs(BaseModelArgs):
     num_experts: int
     num_experts_per_tok: int
     decoder_sparse_step: int
-    mlp_only_layers: List[int]
+    mlp_only_layers: list[int]
     moe_intermediate_size: int
     rms_norm_eps: float
     vocab_size: int
@@ -30,7 +30,7 @@ class ModelArgs(BaseModelArgs):
     tie_word_embeddings: bool
     max_position_embeddings: int
     norm_topk_prob: bool
-    rope_scaling: Optional[Dict[str, Union[float, str]]] = None
+    rope_scaling: Optional[dict[str, Union[float, str]]] = None
 
 
 class Attention(nn.Module):

@@ -1,4 +1,4 @@
-with open("tests/compatibility/test_mlx_cache_contract.py", "r") as f:
+with open("tests/compatibility/test_mlx_cache_contract.py") as f:
     code = f.read()
 
 code = code.replace("k_out.shape == (1, 8, 1, 128)", "isinstance(k_out, TurboQuantKeysView) and v_out.shape == (1, 8, 1, 128)")

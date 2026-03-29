@@ -2,7 +2,7 @@
 
 import math
 from dataclasses import dataclass
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -28,7 +28,7 @@ class ModelArgs(BaseModelArgs):
     use_bias: bool
     use_conv_bias: bool
     tie_word_embeddings: bool
-    time_step_limit: Tuple[float, float]
+    time_step_limit: tuple[float, float]
     time_step_rank: Union[int, str]
     ssm_state_size: Optional[int] = None
     max_position_embeddings: int = 2056

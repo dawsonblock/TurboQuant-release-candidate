@@ -14,11 +14,7 @@ from textwrap import dedent
 from typing import (
     Any,
     Callable,
-    Dict,
-    List,
     Optional,
-    Tuple,
-    Type,
     Union,
 )
 
@@ -102,7 +98,7 @@ def compute_bits_per_weight(model):
 def _download(
     path_or_hf_repo: str,
     revision: Optional[str] = None,
-    allow_patterns: List[str] = None,
+    allow_patterns: list[str] = None,
 ) -> Path:
     """
     Ensures the model is available locally. If the path does not exist locally,
@@ -146,7 +142,7 @@ def hf_repo_to_path(hf_repo):
 
 def load_config(model_path: Path) -> dict:
     try:
-        with open(model_path / "config.json", "r") as f:
+        with open(model_path / "config.json") as f:
             config = json.load(f)
     except FileNotFoundError:
         logging.error(f"Config file not found in {model_path}")
@@ -158,9 +154,9 @@ def load_model(
     model_path: Path,
     lazy: bool = False,
     strict: bool = True,
-    model_config: Optional[Dict[str, Any]] = None,
-    get_model_classes: Callable[[dict], Tuple[Type[nn.Module], Type]] = _get_classes,
-) -> Tuple[nn.Module, dict]:
+    model_config: Optional[dict[str, Any]] = None,
+    get_model_classes: Callable[[dict], tuple[type[nn.Module], type]] = _get_classes,
+) -> tuple[nn.Module, dict]:
     """
     Load and initialize the model from a given path.
 
@@ -283,15 +279,15 @@ def load_tokenizer(model_path, tokenizer_config_extra=None, eos_token_ids=None):
 
 def load(
     path_or_hf_repo: str,
-    tokenizer_config: Optional[Dict[str, Any]] = None,
-    model_config: Optional[Dict[str, Any]] = None,
+    tokenizer_config: Optional[dict[str, Any]] = None,
+    model_config: Optional[dict[str, Any]] = None,
     adapter_path: Optional[str] = None,
     lazy: bool = False,
     return_config: bool = False,
     revision: Optional[str] = None,
 ) -> Union[
-    Tuple[nn.Module, TokenizerWrapper],
-    Tuple[nn.Module, TokenizerWrapper, Dict[str, Any]],
+    tuple[nn.Module, TokenizerWrapper],
+    tuple[nn.Module, TokenizerWrapper, dict[str, Any]],
 ]:
     """
     Load the model and tokenizer from a given path or a huggingface repository.
@@ -353,11 +349,11 @@ def pipeline_load(repo, return_config=False):
     model, config = load_model(model_path, lazy=True, strict=False)
 
     group = mx.distributed.init()
-    rank = group.rank()
+    group.rank()
     model.model.pipeline(group)
 
     # Figure out which files we need for the local shard
-    with open(model_path / "model.safetensors.index.json", "r") as fid:
+    with open(model_path / "model.safetensors.index.json") as fid:
         weight_index = json.load(fid)["weight_map"]
 
     local_files = set()
@@ -572,7 +568,7 @@ def quantize_model(
     bits: int,
     mode: str = "affine",
     quant_predicate: Optional[Callable[[str, nn.Module], Union[bool, dict]]] = None,
-) -> Tuple[nn.Module, dict]:
+) -> tuple[nn.Module, dict]:
     """
     Applies quantization to the model weights.
 
@@ -709,7 +705,7 @@ def save(
     src_path_or_repo: Union[str, Path],
     model: nn.Module,
     tokenizer: TokenizerWrapper,
-    config: Dict[str, Any],
+    config: dict[str, Any],
     donate_model: bool = True,
 ):
 

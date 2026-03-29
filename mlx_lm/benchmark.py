@@ -64,7 +64,6 @@ def main():
         if rank == 0:
             print(*args, **kwargs)
 
-    model_path = args.model or DEFAULT_MODEL
 
     if group.size() > 1:
         model, tokenizer, config = pipeline_load(args.model, return_config=True)
@@ -119,7 +118,7 @@ def main():
 
     results = [(k, avg(k)) for k in report_keys]
     results = [f"{k}={v:.3f}" for k, v in results]
-    rprint(f"Averages: " + ", ".join(results))
+    rprint("Averages: " + ", ".join(results))
 
 
 if __name__ == "__main__":

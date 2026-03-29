@@ -1,4 +1,4 @@
-with open("mlx_lm/generate.py", "r") as f:
+with open("mlx_lm/generate.py") as f:
     lines = f.readlines()
 
 out = []

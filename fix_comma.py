@@ -1,4 +1,4 @@
-with open("tests/integration/test_turboquant_generate.py", "r") as f:
+with open("tests/integration/test_turboquant_generate.py") as f:
     lines = f.readlines()
 
 out = []

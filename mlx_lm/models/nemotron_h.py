@@ -1,8 +1,7 @@
 # Copyright © 2025 Apple Inc.
 
 from dataclasses import dataclass
-from functools import partial
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -35,12 +34,12 @@ class ModelArgs(BaseModelArgs):
     ssm_state_size: int
     conv_kernel: int
     n_groups: int
-    time_step_limit: Tuple[float, float]
+    time_step_limit: tuple[float, float]
     mlp_bias: bool
     layer_norm_epsilon: float
     use_bias: bool
     use_conv_bias: bool
-    hybrid_override_pattern: List[str]
+    hybrid_override_pattern: list[str]
     head_dim: Optional[int] = None
     moe_intermediate_size: Optional[int] = None
     moe_shared_expert_intermediate_size: Optional[int] = None

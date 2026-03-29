@@ -10,15 +10,17 @@ Coverage (from test-plan doc):
   6. upgraded_cache_accepts_more_tokens – update_and_fetch still works after upgrade
 """
 
-import sys, os
+import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-import pytest
 import mlx.core as mx
-from mlx_lm.models.cache import KVCache
+import pytest
+
 from integrations.mlx.cache_adapter import TurboQuantKCache
 from mlx_lm.generate import maybe_turboquant_k_cache
-
+from mlx_lm.models.cache import KVCache
 
 # ─── Fixtures ────────────────────────────────────────────────────────────────
 

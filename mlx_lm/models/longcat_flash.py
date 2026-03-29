@@ -1,6 +1,5 @@
-import math
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -186,7 +185,7 @@ class LongcatFlashTopkRouter(nn.Module):
         )
         self.e_score_correction_bias = mx.zeros((self.n_routed_experts,))
 
-    def __call__(self, hidden_states: mx.array) -> Tuple[mx.array, mx.array]:
+    def __call__(self, hidden_states: mx.array) -> tuple[mx.array, mx.array]:
 
         dtype = hidden_states.dtype
         router_logits = self.classifier(hidden_states)

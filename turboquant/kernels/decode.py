@@ -1,5 +1,6 @@
-import mlx.core as mx
 from typing import Optional
+
+import mlx.core as mx
 
 from turboquant.core.quantizer import dequantize_groups
 from turboquant.core.residual import decode_topk_residual
@@ -34,11 +35,11 @@ def decode_k_fallback(
     d_head: int,
 ) -> mx.array:
     d_pad = (d_head + config.k_group_size - 1) // config.k_group_size * config.k_group_size
-    
+
     y_hat = dequantize_groups(
         packed_k, scales, config.k_bits, config.k_group_size, d_pad
     )
-    
+
     if getattr(config, "mode", "research") != "fast":
         if config.residual_topk > 0 and resid_vals is not None:
             residual = decode_topk_residual(

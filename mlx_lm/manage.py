@@ -1,10 +1,10 @@
 import argparse
-from typing import List, Union
+from typing import Union
 
 from huggingface_hub import scan_cache_dir
 
 
-def tabulate(rows: List[List[Union[str, int]]], headers: List[str]) -> str:
+def tabulate(rows: list[list[Union[str, int]]], headers: list[str]) -> str:
     """
     Inspired by:
     - stackoverflow.com/a/8356620/593036
@@ -32,7 +32,7 @@ def ask_for_confirmation(message: str) -> bool:
             return True
         if answer in n:
             return False
-        print(f"Invalid input. Must be one of: yes/no/y/n or empty for no")
+        print("Invalid input. Must be one of: yes/no/y/n or empty for no")
 
 
 def main():
@@ -65,7 +65,7 @@ def main():
                     [
                         repo.repo_id,
                         repo.repo_type,
-                        "{:>12}".format(repo.size_on_disk_str),
+                        f"{repo.size_on_disk_str:>12}",
                         repo.nb_files,
                         repo.last_accessed_str,
                         repo.last_modified_str,

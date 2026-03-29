@@ -12,17 +12,18 @@ Coverage (from Quant planning doc):
   8. storage_breakdown_keys             – nbytes dominated by 3-bit codes + scales
 """
 
-import sys, os
+import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 import math
+
 import mlx.core as mx
-import mlx.nn as nn
 
+from integrations.mlx.cache_adapter import TurboQuantConfig, TurboQuantKCache
 from mlx_lm.models.cache import KVCache
-from integrations.mlx.cache_adapter import TurboQuantKCache, TurboQuantConfig
 from mlx_lm.models.gemma import Attention, ModelArgs
-
 
 # ─── Shared parameters ───────────────────────────────────────────────────────
 

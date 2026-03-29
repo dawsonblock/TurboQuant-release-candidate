@@ -3,7 +3,7 @@
 import json
 import types
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from transformers import PreTrainedTokenizer
 
@@ -15,7 +15,7 @@ class TextDataset:
 
     def __init__(
         self,
-        data: List[Dict[str, str]],
+        data: list[dict[str, str]],
         tokenizer: PreTrainedTokenizer,
         text_key: str = "text",
     ):
@@ -44,7 +44,7 @@ class ChatDataset:
 
     def __init__(
         self,
-        data: List[Dict[str, str]],
+        data: list[dict[str, str]],
         tokenizer: PreTrainedTokenizer,
         chat_key: str = "messages",
         mask_prompt: bool = False,
@@ -87,7 +87,7 @@ class CompletionsDataset:
 
     def __init__(
         self,
-        data: List[Dict[str, str]],
+        data: list[dict[str, str]],
         tokenizer: PreTrainedTokenizer,
         prompt_key: str,
         completion_key: str,
@@ -124,7 +124,7 @@ class CompletionsDataset:
 
 
 class ConcatenatedDataset:
-    def __init__(self, data: List[Any]):
+    def __init__(self, data: list[Any]):
         self._data = data
         self._len = sum(len(d) for d in self._data)
 
@@ -200,7 +200,7 @@ def load_local_dataset(
     def load_subset(path):
         if not path.exists():
             return []
-        with open(path, "r") as fid:
+        with open(path) as fid:
             data = [json.loads(l) for l in fid]
         return create_dataset(data, tokenizer, config)
 

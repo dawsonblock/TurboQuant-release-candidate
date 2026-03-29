@@ -2,7 +2,7 @@
 
 import math
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -27,8 +27,8 @@ class ModelArgs(BaseModelArgs):
     attention_window_size: int
     vocab_size: int
     embeddings_scale_by_sqrt_dim: bool = True
-    block_types: Optional[List[str]] = None
-    _block_types: Optional[List[str]] = None
+    block_types: Optional[list[str]] = None
+    _block_types: Optional[list[str]] = None
 
     def __post_init__(self):
         # For some reason these have different names in 2B and 9B

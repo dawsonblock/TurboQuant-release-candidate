@@ -1,9 +1,9 @@
 import mlx.core as mx
 import mlx.nn as nn
 
-from mlx_lm.models.cache import KVCache
 from integrations.mlx.cache_adapter import TurboQuantKCache
 from mlx_lm.generate import generate_step, maybe_turboquant_k_cache
+from mlx_lm.models.cache import KVCache
 
 
 class _TinyLM(nn.Module):

@@ -1,4 +1,3 @@
-import mlx.core as mx
 
 def decode_k_metal(
     packed_k,

@@ -1,7 +1,7 @@
 # Copyright © 2025 Apple Inc.
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import mlx.core as mx
 import mlx.nn as nn
@@ -30,12 +30,12 @@ class ModelArgs(BaseModelArgs):
     head_dim: int
     rope_theta: float
     rms_norm_eps: float
-    linear_attn_config: Dict[str, Any]
+    linear_attn_config: dict[str, Any]
     model_max_length: int
     num_experts: int
     moe_intermediate_size: int
     kv_lora_rank: int
-    rope_scaling: Optional[Dict[str, Any]] = None
+    rope_scaling: Optional[dict[str, Any]] = None
     tie_word_embeddings: bool = False
     qk_nope_head_dim: Optional[int] = None
     qk_rope_head_dim: Optional[int] = None
@@ -81,7 +81,7 @@ def _group_expert_select(
     routed_scaling_factor: float,
     renormalize: bool,
     score_function: str,
-) -> Tuple[mx.array, mx.array]:
+) -> tuple[mx.array, mx.array]:
     if score_function == "sigmoid":
         scores = mx.sigmoid(gates)
     elif score_function == "softmax":
@@ -260,7 +260,7 @@ class ShortConv1d(nn.Module):
 
     def __call__(
         self, x: mx.array, cache: Optional[mx.array]
-    ) -> Tuple[mx.array, mx.array]:
+    ) -> tuple[mx.array, mx.array]:
         if cache is None:
             pad = mx.zeros(
                 (x.shape[0], self.kernel_size - 1, x.shape[-1]), dtype=x.dtype
@@ -439,7 +439,7 @@ class KimiLinearModel(nn.Module):
     def __call__(
         self,
         inputs: mx.array,
-        cache: Optional[List[Any]] = None,
+        cache: Optional[list[Any]] = None,
     ) -> mx.array:
         h = self.embed_tokens(inputs)
         if cache is None:
@@ -469,7 +469,7 @@ class Model(nn.Module):
     def __call__(
         self,
         inputs: mx.array,
-        cache: Optional[List[Any]] = None,
+        cache: Optional[list[Any]] = None,
     ) -> mx.array:
         out = self.model(inputs, cache)
         if self.lm_head is None:
@@ -481,7 +481,7 @@ class Model(nn.Module):
         return self.model.layers
 
     def make_cache(self):
-        caches: List[Any] = []
+        caches: list[Any] = []
         for layer in self.layers:
             if layer.is_linear:
                 caches.append(MambaCache())
@@ -489,7 +489,7 @@ class Model(nn.Module):
                 caches.append(KVCache())
         return caches
 
-    def sanitize(self, weights: Dict[str, mx.array]) -> Dict[str, mx.array]:
+    def sanitize(self, weights: dict[str, mx.array]) -> dict[str, mx.array]:
         weights = {k: v for k, v in weights.items() if not k.startswith("model.mtp")}
 
         if self.args.tie_word_embeddings:
