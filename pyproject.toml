@@ -42,6 +42,10 @@ dev = [
   "build>=1.2.1",
   "pytest>=8",
   "twine>=5",
+  "nox>=2024.3.2",
+  "nox-uv>=1.15.0",
+  "mypy>=1.10.0",
+  "ruff>=0.3.5",
 ]
 
 [project.urls]
@@ -62,3 +66,40 @@ mlx_lm = ["py.typed"]
 minversion = "8.0"
 addopts = "-ra"
 testpaths = ["tests"]
+
+[tool.mypy]
+strict = false
+
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+exclude = [
+    "^benchmarks/",
+    "^scripts/",
+    "^tests/"
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".nox",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".venv",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP"] # Default Pyflakes/pycodestyle, Isort, pyupgrade
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"*" = ["E501"]
+
+[[tool.mypy.overrides]]
+module = "mlx_lm.*"
+
