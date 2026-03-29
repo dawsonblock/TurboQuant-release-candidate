@@ -1,0 +1,19 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt || pip install mlx mlx-lm pytest
+      - name: Run validation
+        run: ./scripts/validate_local.sh
+      - name: Run Tests
+        run: pytest tests/

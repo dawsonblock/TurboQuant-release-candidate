@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# MLX / model weights
+*.safetensors
+*.bin
+*.pt
+*.gguf
+*.npz
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Type checker caches
+.mypy_cache/
+.ruff_cache/
+
+# Editor
+.vscode/
+*.swp

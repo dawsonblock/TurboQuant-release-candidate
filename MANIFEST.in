@@ -1,0 +1,4 @@
+include README.md
+include LICENSE
+recursive-include mlx_lm py.typed
+recursive-include docs *.md
