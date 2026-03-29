@@ -365,3 +365,26 @@ docs/
 | Python | ≥ 3.9 |
 | MLX | ≥ 0.30.0 |
 | mlx-lm | ≥ 0.30.0 |
+
+---
+
+## Development & Testing
+
+This project uses `nox` and `uv` to manage isolated build matrices and testing environments. 
+
+First, ensure `uv` or `nox` is installed:
+```bash
+pip install uv nox
+```
+
+To run the complete test suite across the supported Python versions (`3.9`, `3.10`, `3.11`, `3.12`) with `pytest-cov` reporting:
+```bash
+nox -s tests
+```
+*(Note: Python 3.9 test targets omit `mlx` installation to bypass unsupported Apple Silicon wheels gracefully).*
+
+To run all static code analysis (formatting with `ruff` and type-checking with `mypy`):
+```bash
+make static-check
+# Or natively: nox -s lint typecheck
+```
