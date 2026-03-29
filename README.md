@@ -5,7 +5,7 @@
 **Research-grade KV-cache compression for Apple Silicon MLX LLMs**
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://python.org)
-[![MLX](https://img.shields.io/badge/MLX-0.29.3%2B-orange)](https://github.com/ml-explore/mlx)
+[![MLX](https://img.shields.io/badge/MLX-0.30.0%2B-orange)](https://github.com/ml-explore/mlx)
 [![Platform](https://img.shields.io/badge/platform-Apple%20Silicon-black)](https://apple.com/mac)
 
 *3-bit keys · 4-bit values · deterministic rotation · top-k sparse residual · no numpy in the hot path*
@@ -20,7 +20,7 @@ TurboQuant compresses the KV cache of transformer models running on Apple Silico
 
 > **⚠️ Current status:** Serious prototype. Gemma and Llama families are wired.
 > Compression quality (perplexity impact) has **not** been measured at scale.
-> No fused Metal kernel exists yet — the hot path runs in Python-level MLX.
+> High-performance Metal kernel (`decode_k.metal`) integrated using `threadgroup` memory coalescing and `simdgroup` loops.
 > Do not treat the memory/latency numbers as production benchmarks.
 > Supported surface is documented in [docs/supported-surface.md](docs/supported-surface.md). Release gating is documented in [docs/release-checklist.md](docs/release-checklist.md).
 
@@ -72,7 +72,7 @@ Decode K (streaming attention)
 - **Hadamard-family whitening** — exact dense Hadamard matrix for power-of-two head dims, or a deterministic Hadamard-derived orthogonal fallback otherwise; the rotation equalises per-dimension variance while preserving `R.T @ R = I`. *Not* a fast butterfly transform — cost is O(d²) per token.
 - **Top-k sparse residual** — stores the k=2 largest-magnitude quantisation errors per group (fp16 value + uint8 index); recovers the dominant signal the main quantiser misses
 - **Two-phase bit-packing** — pad to group boundary, then to word boundary; handles any bit-width (including 3-bit) for any head-dim
-- **Single execution path** — config selects operations once at init; no runtime branches.
+- **Single execution path & Pre-allocation** — the `.build()` pipeline pre-allocates everything ahead-of-time. The config selects operations once at init to guarantee zero runtime branches in the hot-paths.
 - **Versioned state schema** — `state()` dicts carry `schema_version: 2`; `validate_state()` enforces correctness on restore.
 
 ---
@@ -113,7 +113,7 @@ for start, end, k_blk, v_blk in cache.iter_rotated_kv_blocks(view):
 
 ```python
 from mlx_lm.models.cache import make_prompt_cache
-from mlx_lm.cache_upgrade import upgrade_cache_list
+from integrations.mlx.upgrade import upgrade_cache_list
 from turboquant.config import TurboQuantConfig
 
 cache = make_prompt_cache(model)
@@ -249,11 +249,11 @@ See [docs/evaluation.md](docs/evaluation.md) for interpretation guidance.
 ```
 1024 tokens · 2 KV heads · head_dim=128
 
-  k_codes           ~96 KB    3-bit packed uint32
+  k_packed           ~96 KB    3-bit packed uint32
   k_scales            8 KB    per-group fp16 scales
   k_resid_values      8 KB    top-k fp16 residual values  (k=2)
   k_resid_indices     4 KB    top-k uint8 indices
-  v_codes           128 KB    4-bit packed uint32
+  v_packed           128 KB    4-bit packed uint32
   v_scales            8 KB    per-group fp16 scales
   ──────────────────────────
   total            ~252 KB    vs 1024 KB dense  (4.1× compression)
@@ -332,7 +332,7 @@ docs/
 | Benchmarks (memory / latency / streaming) | ✅ `benchmarks/` |
 | Architecture + integration docs | ✅ `docs/` |
 | Other architectures (Mistral, Phi, …) | ⬜ needs per-arch patch |
-| Fused Metal kernel (rotate + pack) | ⬜ see `turboquant/kernels/` |
+| Fused Metal kernel (decode & dequant) | ✅ threadgroup & simdgroup optimized |
 | Perplexity / quality benchmarks at scale | ⬜ not yet measured |
 
 ---
@@ -341,7 +341,7 @@ docs/
 
 - **Quality unmeasured** — compression ratio is real; perplexity impact at scale has not been benchmarked. Use `turboquant.eval.perplexity_report` and `drift_report` to measure on your data.
 - **Gemma + Llama wired** — `turboquant_streaming_attention` is dispatched in both. Adding a new architecture is a [one-function change](docs/integration.md#adding-a-new-model-family).
-- **No fused kernel yet** — the block iteration runs in Python-level MLX. A Metal shader fusing rotation + pack would be the next real throughput win.
+- **Kernel optimization in progress** — while a high-performance `decode_k.metal` kernel is available using `threadgroup` and `simdgroup` features, the rotation + pack encode step is still Python-level MLX and could be fully unified in Metal.
 - **Hadamard is O(d²)** — not a fast butterfly transform. For very large head-dims, `rotation="identity"` is faster with marginally worse compression.
 
 ---
@@ -363,5 +363,5 @@ docs/
 |---|---|
 | Platform | macOS · Apple Silicon (M1 / M2 / M3 / M4) |
 | Python | ≥ 3.9 |
-| MLX | ≥ 0.29.3 |
-| mlx-lm | ≥ 0.29.1 |
+| MLX | ≥ 0.30.0 |
+| mlx-lm | ≥ 0.30.0 |

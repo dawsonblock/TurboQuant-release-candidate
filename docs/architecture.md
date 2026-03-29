@@ -23,11 +23,11 @@ Input token
 │  Linear projections  →  Q, K, V               │
 │       │                   │                    │
 │       │           ┌────────────────────┐       │
-│       │           │  TurboQuantKCache  │       │
-│       │           │  (KVCompressor)    │       │
+│       │           │    KVCompressor    │       │
+│       │           │                    │       │
 │       │           │                   │       │
-│       │           │  pack_k()  pack_v()│       │
-│       │           │  k_codes   v_codes │       │
+│       │           │  encode_k()  encode_v()│       │
+│       │           │  k_packed   v_packed │       │
 │       │           └──────────┬─────────┘       │
 │       │                      │ iter_blocks()    │
 │       ▼                      ▼                 │
@@ -45,14 +45,15 @@ Input token
 ```
 turboquant/
 ├── config.py               # TurboQuantConfig dataclass (production schema)
-├── runtime/
-│   ├── kv_interface.py     # KVCompressor — the canonical compression class
-│   ├── attention.py        # turboquant_streaming_attention (shared adapter)
-│   ├── state.py            # STATE_SCHEMA_VERSION + validate_state()
-│   ├── pipeline.py         # QuantPipeline — per-layer quantise/dequantise
+├── core/
+│   ├── pipeline.py         # TurboQuantPipeline — per-layer quantise/dequantise
 │   ├── quantizer.py        # group quantisation + bit-packing primitives
 │   ├── rotation.py         # Hadamard / identity / random orthogonal rotation
 │   └── residual.py         # top-k sparse residual encoder
+├── runtime/
+│   ├── kv_interface.py     # KVCompressor — the canonical compression class
+│   ├── attention.py        # turboquant_streaming_attention (shared adapter)
+│   └── state.py            # STATE_SCHEMA_VERSION + validate_state()
 ├── eval/
 │   ├── __init__.py
 │   ├── perplexity.py
@@ -66,8 +67,9 @@ mlx_lm/
 ├── models/
 │   ├── cache.py            # KVCache, TurboQuantKCache (adapter), helpers
 │   └── gemma.py            # Gemma attention wired to streaming attention
-├── generate.py             # maybe_turboquant_k_cache (deprecated) + generate_step
-└── cache_upgrade.py        # upgrade_cache_list — canonical upgrade entry point
+├── generate.py             # generate_step
+└── upgrade.py              # (in integrations/mlx) canonical upgrade entry point
+
 ```
 
 ---
@@ -101,7 +103,7 @@ Production configuration dataclass.  Fields:
 
 The single implementation of KV quantisation.  Lifecycle:
 
-1. `__init__(config)` — creates a `QuantPipeline` (lazy; no MLX arrays yet)
+1. `__init__(config)` — creates a `TurboQuantPipeline` (lazy; no MLX arrays yet)
 2. `update_and_fetch(k, v)` → `(TurboQuantKeysView, v_or_none)` — appends new
    tokens, quantises them, returns a view object for streaming attention
 3. `iter_rotated_kv_blocks(view, block_tokens)` — yields `(s, e, k_rot, v_blk)`
@@ -126,7 +128,7 @@ The single implementation of KV quantisation.  Lifecycle:
 - Dispatches: if `isinstance(k, TurboQuantKeysView)` → streaming path;
   else → `fallback(q, k, v, mask, scale)`
 
-### 3.4 Rotation (`turboquant/runtime/rotation.py`)
+### 3.4 Rotation (`turboquant/core/rotation.py`)
 
 Three modes:
 
@@ -139,11 +141,9 @@ Three modes:
 > **Note**: the Hadamard implementation uses a dense matrix multiply, not the
 > fast Walsh-Hadamard transform butterfly (O(d log d)).
 
-### 3.5 QuantPipeline (`turboquant/runtime/pipeline.py`)
+### 3.5 TurboQuantPipeline (`turboquant/core/pipeline.py`)
 
-Wraps the per-layer encode/decode primitives.  Maintains `_d_head`, `_d_pad`,
-`_v_dim`, `_v_pad` after the first `encode_k` call so that subsequent calls
-do not need to re-infer shapes.
+Wraps the per-layer encode/decode primitives. Now features an explicit `.build()` phase that pre-allocates caches, quantizers, and fixed rotations ahead-of-time to avoid any branch-heavy lazy initialization during hot-path execution.
 
 ### 3.6 State schema (`turboquant/runtime/state.py`)
 
@@ -163,8 +163,8 @@ q [B, H_q, 1, d]    k [B, H_kv, 1, d]    v [B, H_kv, 1, d]
         │                    │                    │
         │            KVCompressor.update_and_fetch(k, v)
         │                    │
-        │            pack_k() → k_codes  [B, H, T, n_words] uint32
-        │            pack_v() → v_codes  [B, H, T, n_words] uint32
+        │            encode_k() → k_packed  [B, H, T, n_words] uint32
+        │            encode_v() → v_packed  [B, H, T, n_words] uint32
         │                    │
         │            TurboQuantKeysView (lazy proxy)
         │                    │
@@ -173,8 +173,8 @@ q [B, H_q, 1, d]    k [B, H_kv, 1, d]    v [B, H_kv, 1, d]
               iter_rotated_kv_blocks(view)
                    ┌─────────┴──────────┐
                    │   for each block   │
-                   │   unpack_k() → k_blk  (rotated)
-                   │   unpack_v() → v_blk
+                   │   decode_k() → k_blk  (rotated)
+                   │   decode_v() → v_blk
                    │   scores = q_rot @ k_blk.T / scale
                    │   online-softmax update
                    └───────────────────┘

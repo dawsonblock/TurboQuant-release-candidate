@@ -84,7 +84,7 @@ def perplexity_report(
         to skip the TurboQuant run and return only ``dense_ppl``.
     k_start:
         Token index at which to start the TurboQuant cache upgrade (if using
-        :func:`mlx_lm.cache_upgrade.upgrade_cache_list`).
+        :func:`integrations.mlx.upgrade.upgrade_cache_list`).
 
     Returns
     -------

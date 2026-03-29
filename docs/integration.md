@@ -23,7 +23,7 @@ the attention dispatch is a one-liner inside each model's attention `__call__`.
 
 ```python
 from mlx_lm.models.cache import make_prompt_cache
-from mlx_lm.cache_upgrade import upgrade_cache_list
+from integrations.mlx.upgrade import upgrade_cache_list
 from turboquant.config import TurboQuantConfig
 
 cache = make_prompt_cache(model)

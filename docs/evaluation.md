@@ -7,10 +7,10 @@
 ## 1. Quick start
 
 ```python
-from mlx_lm.models.cache import TurboQuantConfig
+from turboquant.config import TurboQuantConfig
 from turboquant.eval import perplexity_report, drift_report, memory_report
 
-cfg = TurboQuantConfig(main_bits=3, group_size=64, rotation="identity")
+cfg = TurboQuantConfig(k_bits=3, k_group_size=64, rotation="identity")
 
 # Perplexity
 ppl = perplexity_report(model, input_ids, turboquant_config=cfg)

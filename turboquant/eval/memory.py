@@ -116,8 +116,8 @@ def memory_report(
         upgrade_cache_list(tq_cache, k_start=k_start, config=turboquant_config)
         model(input_ids, cache=tq_cache)
         tq_arrs = [
-            c.k_codes for c in tq_cache
-            if hasattr(c, "k_codes") and c.k_codes is not None
+            getattr(c, "k_packed", getattr(c, "k_codes", None)) for c in tq_cache
+            if hasattr(c, "k_codes") and getattr(c, "k_packed", getattr(c, "k_codes", None)) is not None
         ]
         if tq_arrs:
             mx.eval(*tq_arrs)

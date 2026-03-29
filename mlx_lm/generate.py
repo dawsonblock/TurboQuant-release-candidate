@@ -317,7 +317,7 @@ def maybe_turboquant_k_cache(
     .. deprecated::
         This function is a legacy shim.  New callers should build a
         :class:`turboquant.config.TurboQuantConfig` and call
-        :func:`mlx_lm.cache_upgrade.upgrade_cache_list` directly.
+        :func:`integrations.mlx.upgrade.upgrade_cache_list` directly.
     """
     from turboquant.config import TurboQuantConfig as _TQConfig
     from integrations.mlx.upgrade import upgrade_cache_list

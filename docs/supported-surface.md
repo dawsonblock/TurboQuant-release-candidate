@@ -11,7 +11,7 @@ What this repository currently intends to support:
 - MLX runtime installed locally
 - Research and local evaluation workflows
 - TurboQuant core package: `turboquant/*`
-- `mlx_lm` adapter path used to upgrade dense prompt caches into `TurboQuantKCache`
+- `mlx_lm` adapter path used to upgrade dense prompt caches into `KVCompressor`
 - Llama-family integration path
 - Gemma-family integration path
 
@@ -22,7 +22,7 @@ What is **not** claimed by the current repository state:
 - Public CI runtime certification of MLX-backed generation
 - Production SLOs
 - Broad compatibility across every model in the vendored `mlx_lm/models/` tree
-- Fused Metal kernels
+- Fused Metal kernels for encoding (decode is fully optimized)
 - Large-scale perplexity validation
 - Generic Linux or Windows runtime support
 
