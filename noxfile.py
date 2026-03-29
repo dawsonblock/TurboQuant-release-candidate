@@ -14,7 +14,7 @@ PYTHON_VERSIONS = ["3.9", "3.10", "3.11"]
 @nox.session(python=PYTHON_VERSIONS)
 def tests(session: nox.Session) -> None:
     """Run the test suite."""
-    # Install the package with test dependencies. MLX limits >=0.30.0 prevent python3.9. 
+    # Install the package with test dependencies. MLX limits >=0.30.0 prevent python3.9.
     if session.python == "3.9":
         session.install(".[test]")
     else:
