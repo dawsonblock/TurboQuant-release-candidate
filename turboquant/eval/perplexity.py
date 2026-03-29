@@ -20,6 +20,7 @@ Typical usage
     print(report)
     # {'dense_ppl': 12.3, 'tq_ppl': 12.6, 'delta_ppl': 0.3, 'n_tokens': 8}
 """
+
 from __future__ import annotations
 
 import math
@@ -92,8 +93,8 @@ def perplexity_report(
     """
     from mlx_lm.models.cache import make_prompt_cache
 
-    targets = input_ids[0, 1:]      # [T-1]  (next-token targets)
-    feed    = input_ids[:, :-1]     # [1, T-1]
+    targets = input_ids[0, 1:]  # [T-1]  (next-token targets)
+    feed = input_ids[:, :-1]  # [1, T-1]
 
     # ---- dense ----
     dense_cache = make_prompt_cache(model)
@@ -114,8 +115,8 @@ def perplexity_report(
 
     delta = (tq_ppl - dense_ppl) if tq_ppl is not None else None
     return {
-        "dense_ppl":  round(dense_ppl, 4),
-        "tq_ppl":     round(tq_ppl, 4)  if tq_ppl is not None else None,
-        "delta_ppl":  round(delta,   4)  if delta   is not None else None,
-        "n_tokens":   int(targets.shape[0]),
+        "dense_ppl": round(dense_ppl, 4),
+        "tq_ppl": round(tq_ppl, 4) if tq_ppl is not None else None,
+        "delta_ppl": round(delta, 4) if delta is not None else None,
+        "n_tokens": int(targets.shape[0]),
     }

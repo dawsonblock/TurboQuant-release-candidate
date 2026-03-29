@@ -21,11 +21,13 @@ Usage
             print(f"layer {ev.layer_index}: {ev.old_type} → {ev.new_type} "
                   f"at offset {ev.offset_at_upgrade}")
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 
 # ── Event ─────────────────────────────────────────────────────────────────────
+
 
 @dataclass
 class CacheUpgradeEvent:
@@ -45,6 +47,7 @@ class CacheUpgradeEvent:
     offset_at_upgrade:
         ``cache.offset`` at the moment the decision was made.
     """
+
     upgraded: bool
     layer_index: int
     old_type: str
@@ -54,10 +57,11 @@ class CacheUpgradeEvent:
 
 # ── Upgrade policy ────────────────────────────────────────────────────────────
 
+
 def upgrade_cache_list(
     prompt_cache: list,
     k_start: int | None,
-    config: "Any",  # type: ignore
+    config: object,  # type: ignore
 ) -> list[CacheUpgradeEvent]:
     """Promote KVCache entries to TurboQuantKCache when their offset threshold
     is reached.
@@ -137,22 +141,24 @@ def upgrade_cache_list(
         # Canonical upgrade path: use the production config to populate the cache directly.
         # We wrap it in a legacy shim config for the adapter but pass the true fields.
         legacy_cfg = TurboQuantConfig(
-            main_bits=config.k_bits,
-            group_size=config.k_group_size,
-            rotation=config.rotation,
-            return_mode="view",
-            scale_dtype=config.scale_dtype,
-            resid_scale_bits=8, # legacy fallback
-            residual_topk=config.residual_topk,
-            v_bits=config.v_bits,
-            v_group_size=config.v_group_size,
-            v_scale_dtype=config.v_scale_dtype,
-            v_enabled=config.v_enabled,
-            block_tokens=config.block_tokens,
+            main_bits=config.k_bits,  # type: ignore
+            group_size=config.k_group_size,  # type: ignore
+            rotation=config.rotation,  # type: ignore
+            return_mode="view",  # type: ignore
+            scale_dtype=config.scale_dtype,  # type: ignore
+            resid_scale_bits=8,  # legacy fallback  # type: ignore
+            residual_topk=config.residual_topk,  # type: ignore
+            v_bits=config.v_bits,  # type: ignore
+            v_group_size=config.v_group_size,  # type: ignore
+            v_scale_dtype=config.v_scale_dtype,  # type: ignore
+            v_enabled=config.v_enabled,  # type: ignore
+            block_tokens=config.block_tokens,  # type: ignore
         )
         tq = TurboQuantKCache(legacy_cfg)
         if getattr(c, "keys", None) is not None:
-            tq.update_and_fetch(c.keys[..., :cur_offset, :], c.values[..., :cur_offset, :])
+            tq.update_and_fetch(
+                c.keys[..., :cur_offset, :], c.values[..., :cur_offset, :]
+            )
 
         prompt_cache[i] = tq
         events.append(

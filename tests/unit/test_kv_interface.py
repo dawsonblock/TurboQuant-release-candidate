@@ -11,6 +11,7 @@ Invariants verified
 * state() / from_state() round-trip restores identical tensors.
 * ensure_layout rejects non-4D inputs.
 """
+
 import mlx.core as mx
 import numpy as np
 import pytest
@@ -27,8 +28,10 @@ def _rand(shape, seed=0):
 
 def _default_cfg(**kw):
     defaults = dict(
-        k_bits=4, k_group_size=16,
-        v_bits=4, v_group_size=16,
+        k_bits=4,
+        k_group_size=16,
+        v_bits=4,
+        v_group_size=16,
         rotation="hadamard",
         residual_topk=2,
         block_tokens=4,
@@ -39,6 +42,7 @@ def _default_cfg(**kw):
 
 
 # ── update_and_fetch ──────────────────────────────────────────────────────────
+
 
 def test_update_returns_view_and_values():
     cfg = _default_cfg()
@@ -62,6 +66,7 @@ def test_multi_step_offset():
 
 
 # ── iter_rotated_kv_blocks ────────────────────────────────────────────────────
+
 
 def test_block_iter_covers_all_tokens():
     cfg = _default_cfg(block_tokens=4)
@@ -92,6 +97,7 @@ def test_block_shapes():
 
 # ── Reconstruction quality ────────────────────────────────────────────────────
 
+
 def test_k_reconstruction_quality():
     cfg = _default_cfg(residual_topk=4)
     cache = KVCompressor(cfg)
@@ -104,8 +110,8 @@ def test_k_reconstruction_quality():
     for _, _, k_blk, _ in cache.iter_rotated_kv_blocks(view):
         parts.append(k_blk)
 
-    k_hat = mx.concatenate(parts, axis=2)          # [1,2,8,32] rotated
-    k_rot = cache.pipeline.rotate_queries(k)        # expected rotated
+    k_hat = mx.concatenate(parts, axis=2)  # [1,2,8,32] rotated
+    k_rot = cache.pipeline.rotate_queries(k)  # expected rotated
     mx.eval(k_hat, k_rot)
 
     sig = float(mx.max(k_rot).item() - mx.min(k_rot).item()) + 1e-8
@@ -134,6 +140,7 @@ def test_v_reconstruction_quality():
 
 # ── State serialisation ───────────────────────────────────────────────────────
 
+
 def test_state_restore():
     cfg = _default_cfg()
     cache = KVCompressor(cfg)
@@ -159,6 +166,7 @@ def test_state_restore():
 
 
 # ── Layout enforcement ────────────────────────────────────────────────────────
+
 
 def test_ensure_layout_rejects_3d():
     x = mx.zeros((2, 4, 8))
@@ -204,5 +212,9 @@ def test_state_restore_preserves_calibration_state():
     st = cache.state()
     cache2 = KVCompressor.from_state(st, cfg)
 
-    assert cache2.pipeline._k_quant is not None and cache2.pipeline._k_quant.is_calibrated
-    assert cache2.pipeline._v_quant is not None and cache2.pipeline._v_quant.is_calibrated
+    assert (
+        cache2.pipeline._k_quant is not None and cache2.pipeline._k_quant.is_calibrated
+    )
+    assert (
+        cache2.pipeline._v_quant is not None and cache2.pipeline._v_quant.is_calibrated
+    )

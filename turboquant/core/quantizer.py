@@ -23,6 +23,7 @@ API
     decode(packed, scales, d) → [..., d]
     fit(data)          → calibrates static scales from [N, D] sample
 """
+
 from __future__ import annotations
 
 import mlx.core as mx
@@ -30,6 +31,7 @@ import mlx.core as mx
 from turboquant.errors import TurboQuantShapeError
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
+
 
 def _round_up(n: int, multiple: int) -> int:
     return ((n + multiple - 1) // multiple) * multiple
@@ -54,6 +56,7 @@ def _build_mask(bits: int) -> mx.array:
 _SHIFT_CACHE: dict[int, mx.array] = {}
 _MASK_CACHE: dict[int, mx.array] = {}
 
+
 def build_caches(bits: int) -> None:
     """Pre-allocate bit packing masks and shifts."""
     if bits not in _SHIFT_CACHE:
@@ -61,14 +64,17 @@ def build_caches(bits: int) -> None:
     if bits not in _MASK_CACHE:
         _MASK_CACHE[bits] = _build_mask(bits)
 
+
 def _get_shifts(bits: int) -> mx.array:
     return _SHIFT_CACHE[bits]
+
 
 def _get_mask(bits: int) -> mx.array:
     return _MASK_CACHE[bits]
 
 
 # ── Pack / unpack ─────────────────────────────────────────────────────────────
+
 
 def pack_codes(codes: mx.array, bits: int) -> mx.array:
     """Pack uint32 codes [..., d_pad] → [..., n_words] (uint32).
@@ -81,9 +87,11 @@ def pack_codes(codes: mx.array, bits: int) -> mx.array:
         raise TurboQuantShapeError(f"d_pad={d_pad} not divisible by cpw={cpw}")
     n_words = d_pad // cpw
 
-    words = codes.astype(mx.uint32).reshape(*prefix, n_words, cpw)  # [..., n_words, cpw]
-    shifts = _get_shifts(bits)                                        # [cpw]
-    return mx.sum(mx.left_shift(words, shifts), axis=-1)             # [..., n_words]
+    words = codes.astype(mx.uint32).reshape(
+        *prefix, n_words, cpw
+    )  # [..., n_words, cpw]
+    shifts = _get_shifts(bits)  # [cpw]
+    return mx.sum(mx.left_shift(words, shifts), axis=-1)  # [..., n_words]
 
 
 def unpack_codes(packed: mx.array, d_pad: int, bits: int) -> mx.array:
@@ -92,18 +100,19 @@ def unpack_codes(packed: mx.array, d_pad: int, bits: int) -> mx.array:
     *prefix, n_words = packed.shape
     if n_words * cpw != d_pad:
         raise TurboQuantShapeError(
-            f"Packed n_words={n_words} × cpw={cpw} = {n_words*cpw} ≠ d_pad={d_pad}"
+            f"Packed n_words={n_words} × cpw={cpw} = {n_words * cpw} ≠ d_pad={d_pad}"
         )
     mask = _get_mask(bits)
     shifts = _get_shifts(bits)  # [cpw]
 
-    expanded = packed.reshape(*prefix, n_words, 1)          # [..., n_words, 1]
+    expanded = packed.reshape(*prefix, n_words, 1)  # [..., n_words, 1]
     # Broadcast: [..., n_words, cpw]
     codes = mx.bitwise_and(mx.right_shift(expanded, shifts), mask)
-    return codes.reshape(*prefix, d_pad)                    # [..., d_pad]
+    return codes.reshape(*prefix, d_pad)  # [..., d_pad]
 
 
 # ── Quantise / dequantise helpers ─────────────────────────────────────────────
+
 
 def _compute_scales(
     x_groups: mx.array,
@@ -150,7 +159,7 @@ def quantize_groups(
     scales:  [..., n_groups]  float (same dtype as x)
     """
     *prefix, d_orig = x.shape
-    cpw   = _codes_per_word(bits)
+    cpw = _codes_per_word(bits)
     q_max = (1 << (bits - 1)) - 1
 
     # Phase 1 — group padding
@@ -175,9 +184,7 @@ def quantize_groups(
     # Phase 2 — cpw packing padding
     d_pack = _round_up(d_g, cpw)
     if d_pack > d_g:
-        z2 = mx.zeros(
-            (*unsigned_flat.shape[:-1], d_pack - d_g), dtype=mx.uint32
-        )
+        z2 = mx.zeros((*unsigned_flat.shape[:-1], d_pack - d_g), dtype=mx.uint32)
         unsigned_flat = mx.concatenate([unsigned_flat, z2], axis=-1)
 
     packed = pack_codes(unsigned_flat, bits)
@@ -192,7 +199,7 @@ def dequantize_groups(
     d_orig: int,
 ) -> mx.array:
     """Dequantise packed codes back to [..., d_orig]."""
-    cpw   = _codes_per_word(bits)
+    cpw = _codes_per_word(bits)
     q_max = (1 << (bits - 1)) - 1
     *prefix, n_words = packed.shape
     d_pack = n_words * cpw
@@ -201,10 +208,10 @@ def dequantize_groups(
     n_groups = scales.shape[-1]
     d_g = n_groups * group_size
 
-    unsigned = unpack_codes(packed, d_pack, bits)    # [..., d_pack]
-    unsigned = unsigned[..., :d_g]                   # crop to group region
+    unsigned = unpack_codes(packed, d_pack, bits)  # [..., d_pack]
+    unsigned = unsigned[..., :d_g]  # crop to group region
 
-    q = unsigned.astype(mx.int32) - q_max            # signed
+    q = unsigned.astype(mx.int32) - q_max  # signed
     q_f = q.reshape(*prefix, n_groups, group_size).astype(scales.dtype)
 
     # scales: [..., n_groups] → [..., n_groups, 1]
@@ -214,6 +221,7 @@ def dequantize_groups(
 
 
 # ── GroupScalarQuantizer ──────────────────────────────────────────────────────
+
 
 class GroupScalarQuantizer:
     """Per-group symmetric N-bit scalar quantiser.
@@ -261,8 +269,8 @@ class GroupScalarQuantizer:
 
         xg = data.reshape(N, n_groups, self.group_size)
         # EMA-stable estimate: mean of per-sample absolute maxima
-        abs_max = mx.max(mx.abs(xg), axis=-1)   # [N, n_groups]
-        mean_max = mx.mean(abs_max, axis=0)      # [n_groups]
+        abs_max = mx.max(mx.abs(xg), axis=-1)  # [N, n_groups]
+        mean_max = mx.mean(abs_max, axis=0)  # [n_groups]
         scales = mx.maximum(mean_max / q_max, mx.array(self.eps, dtype=data.dtype))
         mx.eval(scales)
         self._calibrated_scales = scales
@@ -295,8 +303,6 @@ class GroupScalarQuantizer:
         )
         return packed, scales
 
-    def decode(
-        self, packed: mx.array, scales: mx.array, d_orig: int
-    ) -> mx.array:
+    def decode(self, packed: mx.array, scales: mx.array, d_orig: int) -> mx.array:
         """(packed [..., n_words], scales [..., n_groups]) → [..., d_orig]."""
         return dequantize_groups(packed, scales, self.n_bits, self.group_size, d_orig)

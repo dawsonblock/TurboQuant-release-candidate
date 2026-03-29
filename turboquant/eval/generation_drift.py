@@ -23,6 +23,7 @@ Typical usage
     print(report)
     # {'mean_kl': 0.004, 'max_kl': 0.021, 'n_tokens': 63}
 """
+
 from __future__ import annotations
 
 import mlx.core as mx
@@ -64,7 +65,7 @@ def logit_kl_divergence(
 
 def _collect_logits(model: nn.Module, input_ids: mx.array, cache) -> mx.array:
     logits = model(input_ids, cache=cache)  # [1, T, V]
-    return logits[0]                        # [T, V]
+    return logits[0]  # [T, V]
 
 
 def drift_report(
@@ -98,20 +99,20 @@ def drift_report(
     """
     from mlx_lm.models.cache import make_prompt_cache
 
-    feed = input_ids[:, :-1]   # [1, T-1]
+    feed = input_ids[:, :-1]  # [1, T-1]
 
     # dense reference
-    dense_cache  = make_prompt_cache(model)
+    dense_cache = make_prompt_cache(model)
     dense_logits = _collect_logits(model, feed, cache=dense_cache)
     mx.eval(dense_logits)
 
     if turboquant_config is None:
         T = dense_logits.shape[0]
         return {
-            "mean_kl":      0.0,
-            "max_kl":       0.0,
-            "min_kl":       0.0,
-            "n_tokens":     T,
+            "mean_kl": 0.0,
+            "max_kl": 0.0,
+            "min_kl": 0.0,
+            "n_tokens": T,
             "kl_per_token": [0.0] * T,
         }
 
@@ -127,9 +128,9 @@ def drift_report(
 
     kl_list = kl_vec.tolist()
     return {
-        "mean_kl":      round(float(mx.mean(kl_vec).item()), 6),
-        "max_kl":       round(float(mx.max(kl_vec).item()),  6),
-        "min_kl":       round(float(mx.min(kl_vec).item()),  6),
-        "n_tokens":     len(kl_list),
+        "mean_kl": round(float(mx.mean(kl_vec).item()), 6),
+        "max_kl": round(float(mx.max(kl_vec).item()), 6),
+        "min_kl": round(float(mx.min(kl_vec).item()), 6),
+        "n_tokens": len(kl_list),
         "kl_per_token": [round(x, 6) for x in kl_list],
     }

@@ -14,6 +14,7 @@ iterator, concatenates them along the sequence axis, and calls
 ``extract_kv`` is a user-supplied function that receives each batch
 and returns (keys, values) as MLX arrays in [B, H, T, D] layout.
 """
+
 from __future__ import annotations
 
 from collections.abc import Iterable
@@ -28,9 +29,7 @@ from turboquant.runtime.layout import ensure_layout
 def calibrate(
     pipeline: TurboQuantPipeline,
     data_iter: Iterable,
-    extract_kv: Callable[
-        [object], tuple[mx.array | None, mx.array | None]
-    ],
+    extract_kv: Callable[[object], tuple[mx.array | None, mx.array | None]],
     mode: Literal["k", "v", "both"] = "both",
     max_batches: int = 64,
 ) -> TurboQuantPipeline:
@@ -61,9 +60,7 @@ def calibrate(
             keys = ensure_layout(keys, "keys")
             B, H, T, D = keys.shape
             # Rotate before collecting so scales match the encoded domain
-            rot_k = pipeline.rotate_queries(
-                keys.reshape(B * H, T, D)
-            )
+            rot_k = pipeline.rotate_queries(keys.reshape(B * H, T, D))
             k_samples.append(rot_k.reshape(B * H * T, D))
             mx.eval(rot_k)
 
@@ -74,12 +71,12 @@ def calibrate(
             mx.eval(values)
 
     if mode in ("k", "both") and k_samples:
-        k_data = mx.concatenate(k_samples, axis=0)   # [N, D]
+        k_data = mx.concatenate(k_samples, axis=0)  # [N, D]
         mx.eval(k_data)
         pipeline.fit_k(k_data)
 
     if mode in ("v", "both") and v_samples:
-        v_data = mx.concatenate(v_samples, axis=0)   # [N, D]
+        v_data = mx.concatenate(v_samples, axis=0)  # [N, D]
         mx.eval(v_data)
         pipeline.fit_v(v_data)
 

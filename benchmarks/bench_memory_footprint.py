@@ -12,6 +12,7 @@ Sample output:
   TurboQuant          4     64     256      0.62       2558
   ...
 """
+
 import os
 import sys
 
@@ -81,32 +82,38 @@ def main():
         dense_b = _dense_bytes(T)
         print(
             f"{'dense (float16)':24s}  {'16':>4}  {'--':>5}  "
-            f"{T:>6}  {dense_b/1e6:>9.2f}  "
-            f"{dense_b//T:>10}  {'1.0x':>9}"
+            f"{T:>6}  {dense_b / 1e6:>9.2f}  "
+            f"{dense_b // T:>10}  {'1.0x':>9}"
         )
         for cfg_kw in BIT_CONFIGS:
             cfg = TurboQuantConfig(**cfg_kw)
             tq_b = _turboquant_bytes(cfg, T)
             ratio = dense_b / tq_b if tq_b > 0 else float("inf")
             bits = cfg_kw["k_bits"]
-            grp  = cfg_kw["k_group_size"]
+            grp = cfg_kw["k_group_size"]
             label = f"TurboQuant k={bits}b g={grp}"
             print(
                 f"{label:24s}  {bits:>4}  {grp:>5}  "
-                f"{T:>6}  {tq_b/1e6:>9.2f}  "
-                f"{tq_b//T if T else 0:>10}  "
+                f"{T:>6}  {tq_b / 1e6:>9.2f}  "
+                f"{tq_b // T if T else 0:>10}  "
                 f"{ratio:>8.1f}x"
             )
         print()
 
     # ---- per-buffer breakdown for one representative config ----
     print("\n--- Per-buffer breakdown (3-bit k, group=64, 1024 tokens) ---")
-    bd = _breakdown_row(TurboQuantConfig(k_bits=3, k_group_size=64, ), 1024)
+    bd = _breakdown_row(
+        TurboQuantConfig(
+            k_bits=3,
+            k_group_size=64,
+        ),
+        1024,
+    )
     for name, val in bd.items():
         if name == "total":
-            print(f"  {'TOTAL':30s}  {val/1e3:8.1f} kB")
+            print(f"  {'TOTAL':30s}  {val / 1e3:8.1f} kB")
         elif val:
-            print(f"  {name:30s}  {val/1e3:8.1f} kB")
+            print(f"  {name:30s}  {val / 1e3:8.1f} kB")
 
     print("\ndone.")
 

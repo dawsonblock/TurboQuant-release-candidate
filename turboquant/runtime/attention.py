@@ -24,6 +24,7 @@ Public API
 Internal helpers are prefixed with ``_`` and should not be imported
 directly by model files.
 """
+
 from __future__ import annotations
 
 from typing import Any, Callable
@@ -34,6 +35,7 @@ from turboquant.runtime.kv_interface import TurboQuantKeysView
 
 # ── GQA broadcast ─────────────────────────────────────────────────────────────
 
+
 def attention_kernel(q, k, v, scale=1.0):
     """
     Placeholder attention kernel boundary.
@@ -42,6 +44,7 @@ def attention_kernel(q, k, v, scale=1.0):
     qf = q.astype(mx.float32)
     kf = k.astype(mx.float32)
     return mx.matmul(qf, kf.transpose(0, 1, 3, 2)) * scale
+
 
 def _expand_kv_heads(x: mx.array, target_heads: int) -> mx.array:
     """Broadcast KV heads to match query heads for grouped-query attention.
@@ -70,6 +73,7 @@ def _expand_kv_heads(x: mx.array, target_heads: int) -> mx.array:
 
 
 # ── Core online-softmax loop ──────────────────────────────────────────────────
+
 
 def _streaming_softmax_attention(
     q_rot: mx.array,
@@ -101,19 +105,19 @@ def _streaming_softmax_attention(
     cache = keys_view.cache
     B, H_q, L_q, _ = q_rot.shape
 
-    q_end   = keys_view.end
+    q_end = keys_view.end
     q_start = q_end - L_q
     # q_pos: [1, 1, L_q, 1] — broadcast-friendly causal position tensor
     q_pos = mx.arange(q_start, q_end, dtype=mx.int32).reshape(1, 1, L_q, 1)
 
     # Online-softmax state
-    m   = mx.full((B, H_q, L_q, 1), -1e30, dtype=mx.float32)
+    m = mx.full((B, H_q, L_q, 1), -1e30, dtype=mx.float32)
     lse = mx.zeros((B, H_q, L_q, 1), dtype=mx.float32)
     acc: mx.array | None = None
 
     for s, e, k_rot_blk, v_blk in cache.iter_rotated_kv_blocks(keys_view):
         k_rot_blk = _expand_kv_heads(k_rot_blk, H_q)
-        v_blk     = _expand_kv_heads(v_blk,     H_q)
+        v_blk = _expand_kv_heads(v_blk, H_q)
 
         q_rot.astype(mx.float32)
         k_rot_blk.astype(mx.float32)
@@ -124,7 +128,7 @@ def _streaming_softmax_attention(
 
         # Causal mask: skip if block is strictly in the past
         if e > q_start:
-            k_pos  = mx.arange(s, e, dtype=mx.int32).reshape(1, 1, 1, e - s)
+            k_pos = mx.arange(s, e, dtype=mx.int32).reshape(1, 1, 1, e - s)
             scores = mx.where(
                 k_pos <= q_pos,
                 scores,
@@ -133,27 +137,28 @@ def _streaming_softmax_attention(
 
         blk_m = mx.max(scores, axis=-1, keepdims=True)
         new_m = mx.maximum(m, blk_m)
-        alpha = mx.exp(m - new_m)       # rescale factor for old accumulator
-        p     = mx.exp(scores - new_m)  # softmax numerator for this block
+        alpha = mx.exp(m - new_m)  # rescale factor for old accumulator
+        p = mx.exp(scores - new_m)  # softmax numerator for this block
 
         if acc is None:
-            Dv  = vf.shape[-1]
+            Dv = vf.shape[-1]
             acc = mx.zeros((B, H_q, L_q, Dv), dtype=mx.float32)
 
         lse = lse * alpha + mx.sum(p, axis=-1, keepdims=True)
         acc = acc * alpha + mx.matmul(p, vf)
-        m   = new_m
+        m = new_m
 
     if acc is None:
         # Empty view (e.g. first token of a fresh session) — return zeros.
-        Dv  = q_rot.shape[-1]
+        Dv = q_rot.shape[-1]
         acc = mx.zeros((B, H_q, L_q, Dv), dtype=mx.float32)
-        lse = mx.ones((B, H_q, L_q, 1),   dtype=mx.float32)
+        lse = mx.ones((B, H_q, L_q, 1), dtype=mx.float32)
 
     return acc / mx.maximum(lse, mx.array(1e-6, dtype=lse.dtype))
 
 
 # ── Public streaming entry point ──────────────────────────────────────────────
+
 
 def turboquant_streaming_attention(
     queries: mx.array,
@@ -189,6 +194,7 @@ def turboquant_streaming_attention(
 
 
 # ── High-level dispatcher ─────────────────────────────────────────────────────
+
 
 def maybe_turboquant_attention(
     queries: mx.array,

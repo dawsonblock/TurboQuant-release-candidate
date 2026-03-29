@@ -4,6 +4,7 @@ TurboQuant configuration.
 All parameters are fixed at construction. The pipeline has no runtime
 branches — the config selects the execution path once at init time.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -15,8 +16,8 @@ from turboquant.errors import TurboQuantConfigError
 @dataclass
 class TurboQuantConfig:
     # ── Key quantisation ─────────────────────────────────────────────────────
-    k_bits: int = 3             # bits per K-code  (3 or 4 recommended)
-    k_group_size: int = 64      # quantisation group width along head_dim
+    k_bits: int = 3  # bits per K-code  (3 or 4 recommended)
+    k_group_size: int = 64  # quantisation group width along head_dim
 
     # ── Value quantisation ───────────────────────────────────────────────────
     v_bits: int = 4
@@ -31,7 +32,7 @@ class TurboQuantConfig:
     # "random_orthogonal" — QR-decomposed Gaussian, works for any d, slower
     # "identity"        — no rotation; use only for debugging
     rotation: Literal["identity", "hadamard", "random_orthogonal"] = "hadamard"
-    rotation_seed: int = 42     # fixed seed → deterministic across runs
+    rotation_seed: int = 42  # fixed seed → deterministic across runs
 
     # ── Residual ─────────────────────────────────────────────────────────────
     # Top-k sparse residual stored per group after main quantisation.
@@ -41,7 +42,7 @@ class TurboQuantConfig:
     residual_topk: int = 2
 
     # ── Allocation ───────────────────────────────────────────────────────────
-    block_tokens: int = 256     # streaming-attention block size
+    block_tokens: int = 256  # streaming-attention block size
     allocation_step: int = 512  # token slots added per reallocation
 
     # ── Numerical ────────────────────────────────────────────────────────────
@@ -58,32 +59,42 @@ class TurboQuantConfig:
         if self.v_bits < 2 or self.v_bits > 8:
             raise TurboQuantConfigError(f"v_bits must be in [2, 8], got {self.v_bits}")
         if self.k_group_size < 1:
-            raise TurboQuantConfigError(f"k_group_size must be >= 1, got {self.k_group_size}")
+            raise TurboQuantConfigError(
+                f"k_group_size must be >= 1, got {self.k_group_size}"
+            )
         if self.v_group_size < 1:
-            raise TurboQuantConfigError(f"v_group_size must be >= 1, got {self.v_group_size}")
+            raise TurboQuantConfigError(
+                f"v_group_size must be >= 1, got {self.v_group_size}"
+            )
         if self.residual_topk < 0:
-            raise TurboQuantConfigError(f"residual_topk must be >= 0, got {self.residual_topk}")
+            raise TurboQuantConfigError(
+                f"residual_topk must be >= 0, got {self.residual_topk}"
+            )
         if self.residual_topk > self.k_group_size:
-            raise TurboQuantConfigError(f"residual_topk ({self.residual_topk}) cannot exceed k_group_size ({self.k_group_size})")
+            raise TurboQuantConfigError(
+                f"residual_topk ({self.residual_topk}) cannot exceed k_group_size ({self.k_group_size})"
+            )
         if self.block_tokens < 1:
-            raise TurboQuantConfigError(f"block_tokens must be >= 1, got {self.block_tokens}")
+            raise TurboQuantConfigError(
+                f"block_tokens must be >= 1, got {self.block_tokens}"
+            )
         if self.allocation_step < 1:
             raise TurboQuantConfigError(
                 f"allocation_step must be >= 1, got {self.allocation_step}"
             )
         if self.allocation_step < self.block_tokens:
-            raise TurboQuantConfigError(f"allocation_step ({self.allocation_step}) should be >= block_tokens ({self.block_tokens})")
+            raise TurboQuantConfigError(
+                f"allocation_step ({self.allocation_step}) should be >= block_tokens ({self.block_tokens})"
+            )
         _valid_rotations = ("identity", "hadamard", "random_orthogonal")
         if self.rotation not in _valid_rotations:
             raise TurboQuantConfigError(
-                f"rotation must be one of {_valid_rotations}, "
-                f"got {self.rotation!r}"
+                f"rotation must be one of {_valid_rotations}, got {self.rotation!r}"
             )
         _valid_dtypes = ("float16", "bfloat16")
         if self.scale_dtype not in _valid_dtypes:
             raise TurboQuantConfigError(
-                f"scale_dtype must be one of {_valid_dtypes}, "
-                f"got {self.scale_dtype!r}"
+                f"scale_dtype must be one of {_valid_dtypes}, got {self.scale_dtype!r}"
             )
         if self.v_scale_dtype not in _valid_dtypes:
             raise TurboQuantConfigError(
@@ -96,11 +107,18 @@ class TurboQuantConfig:
         """Return a stable string representation of the config format to be used as state validation."""
         import hashlib
         import json
+
         state_dict = {
-            "kb": self.k_bits, "kg": self.k_group_size,
-            "vb": self.v_bits, "vg": self.v_group_size, "ve": self.v_enabled,
-            "rot": self.rotation, "rs": self.rotation_seed,
-            "rt": self.residual_topk, "sd": self.scale_dtype, "vsd": self.v_scale_dtype
+            "kb": self.k_bits,
+            "kg": self.k_group_size,
+            "vb": self.v_bits,
+            "vg": self.v_group_size,
+            "ve": self.v_enabled,
+            "rot": self.rotation,
+            "rs": self.rotation_seed,
+            "rt": self.residual_topk,
+            "sd": self.scale_dtype,
+            "vsd": self.v_scale_dtype,
         }
         encoded = json.dumps(state_dict, sort_keys=True).encode("utf-8")
         return hashlib.sha256(encoded).hexdigest()[:16]

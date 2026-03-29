@@ -10,6 +10,7 @@ def test_cache_contract_initialization():
     assert hasattr(cache, "update_and_fetch")
     assert hasattr(cache, "offset")
 
+
 def test_cache_contract_shape():
     config = TurboQuantConfig()
     cache = KVCompressor(config)

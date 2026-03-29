@@ -15,6 +15,6 @@ tq_text = generate(
     max_tokens=100,
     turboquant_k_start=16,
     turboquant_main_bits=3,
-    turboquant_group_size=64
+    turboquant_group_size=64,
 )
 print(tq_text)

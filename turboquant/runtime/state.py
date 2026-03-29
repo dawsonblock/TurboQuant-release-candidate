@@ -7,6 +7,7 @@ STATE_SCHEMA_VERSION is bumped whenever the dict layout produced by
 Consumers (save/load, test fixtures, mlx-lm cache migration) must pass
 the state dict through ``validate_state`` before restoring a compressor.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -32,9 +33,17 @@ _REQUIRED_SCALAR_KEYS = frozenset(
 )
 _CONFIG_KEYS_V2 = frozenset(
     {
-        "k_bits", "k_group_size", "v_bits", "v_group_size", "v_enabled",
-        "rotation", "rotation_seed", "residual_topk", "scale_dtype",
-        "v_scale_dtype", "eps",
+        "k_bits",
+        "k_group_size",
+        "v_bits",
+        "v_group_size",
+        "v_enabled",
+        "rotation",
+        "rotation_seed",
+        "residual_topk",
+        "scale_dtype",
+        "v_scale_dtype",
+        "eps",
     }
 )
 
@@ -101,11 +110,15 @@ def validate_state(
 
     missing = _REQUIRED_SCALAR_KEYS - state.keys()
     if missing:
-        raise TurboQuantStateError(f"State dict is missing required keys: {sorted(missing)}.")
+        raise TurboQuantStateError(
+            f"State dict is missing required keys: {sorted(missing)}."
+        )
 
     offset = state["offset"]
     if not isinstance(offset, int) or offset < 0:
-        raise TurboQuantStateError(f"'offset' must be a non-negative int, got {offset!r}.")
+        raise TurboQuantStateError(
+            f"'offset' must be a non-negative int, got {offset!r}."
+        )
 
     if offset > 0:
         k_packed = state.get("k_packed")
@@ -150,7 +163,12 @@ def validate_state(
 
     v_scales = state.get("v_scales")
     v_pad = state.get("v_pad")
-    if config.v_enabled and v_scales is not None and hasattr(v_scales, "shape") and v_pad is not None:
+    if (
+        config.v_enabled
+        and v_scales is not None
+        and hasattr(v_scales, "shape")
+        and v_pad is not None
+    ):
         vg_stored = v_scales.shape[-1]
         vg_expected = v_pad // config.v_group_size
         if vg_stored != vg_expected:

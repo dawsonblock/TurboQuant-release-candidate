@@ -31,13 +31,13 @@ class TurboQuantConfig:
 
     main_bits: int = 3
     group_size: int = 64
-    rotation: str = "identity"       # "identity" | "hadamard" | "random_orthogonal"
-    residual: str = "group_proj"     # legacy; ignored in production path
-    return_mode: str = "dequant"     # "dequant" | "view"
+    rotation: str = "identity"  # "identity" | "hadamard" | "random_orthogonal"
+    residual: str = "group_proj"  # legacy; ignored in production path
+    return_mode: str = "dequant"  # "dequant" | "view"
     block_tokens: int = 256
     scale_dtype: str = "float16"
-    resid_scale_bits: int = 8        # legacy adapter metadata only
-    residual_topk: int = 2          # production sparse residual count
+    resid_scale_bits: int = 8  # legacy adapter metadata only
+    residual_topk: int = 2  # production sparse residual count
     v_bits: int = 4
     v_group_size: int = 64
     v_scale_dtype: str = "float16"
@@ -127,14 +127,14 @@ class TurboQuantKCache(_BaseCache):
     def storage_breakdown(self) -> dict:
         bd = self._impl.memory_breakdown()
         return {
-            "k_codes":            bd.get("k_packed", 0),
-            "k_scales":           bd.get("k_scales", 0),
-            "k_resid_scale_q":    0,
-            "k_resid_scale_max":  0,
+            "k_codes": bd.get("k_packed", 0),
+            "k_scales": bd.get("k_scales", 0),
+            "k_resid_scale_q": 0,
+            "k_resid_scale_max": 0,
             "k_resid_proj_signs": 0,
-            "v_codes":            bd.get("v_packed", 0),
-            "v_scales":           bd.get("v_scales", 0),
-            "total":              bd.get("total", 0),
+            "v_codes": bd.get("v_packed", 0),
+            "v_scales": bd.get("v_scales", 0),
+            "total": bd.get("total", 0),
         }
 
     # ------------------------------------------------------------------
@@ -197,8 +197,7 @@ class TurboQuantKCache(_BaseCache):
         if self.config.v_enabled and self._impl.v_packed is not None:
             impl_view = self._impl._make_view()
             v_blocks = [
-                vb
-                for _, _, _, vb in self._impl.iter_rotated_kv_blocks(impl_view)
+                vb for _, _, _, vb in self._impl.iter_rotated_kv_blocks(impl_view)
             ]
             v_dense = mx.concatenate(v_blocks, axis=2).astype(values.dtype)
         else:
@@ -244,9 +243,9 @@ class TurboQuantKCache(_BaseCache):
         return (
             _crop(impl._k_packed),
             _crop(impl._k_scales),
-            None,   # k_resid_scale_q   (sign-sketch; not used in production)
-            None,   # k_resid_scale_max
-            None,   # k_resid_proj_signs
+            None,  # k_resid_scale_q   (sign-sketch; not used in production)
+            None,  # k_resid_scale_max
+            None,  # k_resid_proj_signs
             _crop(impl._v_packed),
             _crop(impl._v_scales),
         )
@@ -261,9 +260,9 @@ class TurboQuantKCache(_BaseCache):
         impl._v_scales = v_scales
         if k_codes is not None:
             impl.offset = k_codes.shape[2]
-            impl._cap   = k_codes.shape[2]
-            impl._B     = k_codes.shape[0]
-            impl._H     = k_codes.shape[1]
+            impl._cap = k_codes.shape[2]
+            impl._B = k_codes.shape[0]
+            impl._H = k_codes.shape[1]
         else:
             impl.offset = 0
 
@@ -277,10 +276,10 @@ class TurboQuantKCache(_BaseCache):
         impl = self._impl
         pipeline = impl.pipeline
         d_head = getattr(pipeline, "_d_head", None)
-        d_pad  = getattr(pipeline, "_d_pad",  None)
-        v_dim  = getattr(pipeline, "_v_dim",  None)
-        v_pad  = getattr(pipeline, "_v_pad",  None)
-        cfg    = self.config
+        d_pad = getattr(pipeline, "_d_pad", None)
+        v_dim = getattr(pipeline, "_v_dim", None)
+        v_pad = getattr(pipeline, "_v_pad", None)
+        cfg = self.config
 
         if d_head is None:
             return ("",) * 18
@@ -288,9 +287,9 @@ class TurboQuantKCache(_BaseCache):
         return (
             str(impl.offset),
             str(d_head),
-            str(d_pad  if d_pad  is not None else ""),
-            str(v_dim  if v_dim  is not None else ""),
-            str(v_pad  if v_pad  is not None else ""),
+            str(d_pad if d_pad is not None else ""),
+            str(v_dim if v_dim is not None else ""),
+            str(v_pad if v_pad is not None else ""),
             str(getattr(impl, "_dtype", None) or ""),
             str(cfg.main_bits),
             str(cfg.group_size),
@@ -310,18 +309,45 @@ class TurboQuantKCache(_BaseCache):
     def meta_state(self, v):
         if len(v) == 17:
             (
-                offset, d_head, d_pad, value_dim, v_pad, dtype_name,
-                main_bits, group_size, rotation, return_mode, scale_dtype,
-                resid_scale_bits, v_bits, v_group_size, v_scale_dtype,
-                v_enabled, block_tokens,
+                offset,
+                d_head,
+                d_pad,
+                value_dim,
+                v_pad,
+                dtype_name,
+                main_bits,
+                group_size,
+                rotation,
+                return_mode,
+                scale_dtype,
+                resid_scale_bits,
+                v_bits,
+                v_group_size,
+                v_scale_dtype,
+                v_enabled,
+                block_tokens,
             ) = v
             residual_topk = "2"
         elif len(v) == 18:
             (
-                offset, d_head, d_pad, value_dim, v_pad, dtype_name,
-                main_bits, group_size, rotation, return_mode, scale_dtype,
-                resid_scale_bits, residual_topk, v_bits, v_group_size,
-                v_scale_dtype, v_enabled, block_tokens,
+                offset,
+                d_head,
+                d_pad,
+                value_dim,
+                v_pad,
+                dtype_name,
+                main_bits,
+                group_size,
+                rotation,
+                return_mode,
+                scale_dtype,
+                resid_scale_bits,
+                residual_topk,
+                v_bits,
+                v_group_size,
+                v_scale_dtype,
+                v_enabled,
+                block_tokens,
             ) = v
         else:
             raise ValueError(
@@ -329,26 +355,26 @@ class TurboQuantKCache(_BaseCache):
             )
         impl = self._impl
         pipeline = impl.pipeline
-        pipeline._d_head = int(d_head)    if d_head    else None
-        pipeline._d_pad  = int(d_pad)     if d_pad     else None
-        pipeline._v_dim  = int(value_dim) if value_dim else None
-        pipeline._v_pad  = int(v_pad)     if v_pad     else None
-        impl.offset      = int(offset)    if offset    else 0
-        impl._dtype      = dtype_name or None
+        pipeline._d_head = int(d_head) if d_head else None
+        pipeline._d_pad = int(d_pad) if d_pad else None
+        pipeline._v_dim = int(value_dim) if value_dim else None
+        pipeline._v_pad = int(v_pad) if v_pad else None
+        impl.offset = int(offset) if offset else 0
+        impl._dtype = dtype_name or None
 
         self.config = TurboQuantConfig(
-            main_bits        = int(main_bits)          if main_bits        else 3,
-            group_size       = int(group_size)         if group_size       else 64,
-            rotation         = rotation                or "identity",
-            return_mode      = return_mode             or "dequant",
-            scale_dtype      = scale_dtype             or "float16",
-            resid_scale_bits = int(resid_scale_bits)   if resid_scale_bits else 8,
-            residual_topk    = int(residual_topk)      if residual_topk    else 2,
-            v_bits           = int(v_bits)             if v_bits           else 4,
-            v_group_size     = int(v_group_size)       if v_group_size     else 64,
-            v_scale_dtype    = v_scale_dtype           or "float16",
-            v_enabled        = (v_enabled == "1"),
-            block_tokens     = int(block_tokens)       if block_tokens     else 256,
+            main_bits=int(main_bits) if main_bits else 3,
+            group_size=int(group_size) if group_size else 64,
+            rotation=rotation or "identity",
+            return_mode=return_mode or "dequant",
+            scale_dtype=scale_dtype or "float16",
+            resid_scale_bits=int(resid_scale_bits) if resid_scale_bits else 8,
+            residual_topk=int(residual_topk) if residual_topk else 2,
+            v_bits=int(v_bits) if v_bits else 4,
+            v_group_size=int(v_group_size) if v_group_size else 64,
+            v_scale_dtype=v_scale_dtype or "float16",
+            v_enabled=(v_enabled == "1"),
+            block_tokens=int(block_tokens) if block_tokens else 256,
         )
         self._return_mode = self.config.return_mode
 
@@ -357,18 +383,45 @@ class TurboQuantKCache(_BaseCache):
         """Restore from (state, meta_state) -- 2-arg legacy classmethod."""
         if len(meta_state) == 17:
             (
-                offset, d_head, d_pad, value_dim, v_pad, dtype_name,
-                main_bits, group_size, rotation, return_mode, scale_dtype,
-                resid_scale_bits, v_bits, v_group_size, v_scale_dtype,
-                v_enabled, block_tokens,
+                offset,
+                d_head,
+                d_pad,
+                value_dim,
+                v_pad,
+                dtype_name,
+                main_bits,
+                group_size,
+                rotation,
+                return_mode,
+                scale_dtype,
+                resid_scale_bits,
+                v_bits,
+                v_group_size,
+                v_scale_dtype,
+                v_enabled,
+                block_tokens,
             ) = meta_state
             residual_topk = "2"
         elif len(meta_state) == 18:
             (
-                offset, d_head, d_pad, value_dim, v_pad, dtype_name,
-                main_bits, group_size, rotation, return_mode, scale_dtype,
-                resid_scale_bits, residual_topk, v_bits, v_group_size,
-                v_scale_dtype, v_enabled, block_tokens,
+                offset,
+                d_head,
+                d_pad,
+                value_dim,
+                v_pad,
+                dtype_name,
+                main_bits,
+                group_size,
+                rotation,
+                return_mode,
+                scale_dtype,
+                resid_scale_bits,
+                residual_topk,
+                v_bits,
+                v_group_size,
+                v_scale_dtype,
+                v_enabled,
+                block_tokens,
             ) = meta_state
         else:
             raise ValueError(
@@ -376,26 +429,26 @@ class TurboQuantKCache(_BaseCache):
             )
 
         cfg = TurboQuantConfig(
-            main_bits        = int(main_bits)          if main_bits        else 3,
-            group_size       = int(group_size)         if group_size       else 64,
-            rotation         = rotation                or "identity",
-            return_mode      = return_mode             or "dequant",
-            scale_dtype      = scale_dtype             or "float16",
-            resid_scale_bits = int(resid_scale_bits)   if resid_scale_bits else 8,
-            residual_topk    = int(residual_topk)      if residual_topk    else 2,
-            v_bits           = int(v_bits)             if v_bits           else 4,
-            v_group_size     = int(v_group_size)       if v_group_size     else 64,
-            v_scale_dtype    = v_scale_dtype           or "float16",
-            v_enabled        = (v_enabled == "1"),
-            block_tokens     = int(block_tokens)       if block_tokens     else 256,
+            main_bits=int(main_bits) if main_bits else 3,
+            group_size=int(group_size) if group_size else 64,
+            rotation=rotation or "identity",
+            return_mode=return_mode or "dequant",
+            scale_dtype=scale_dtype or "float16",
+            resid_scale_bits=int(resid_scale_bits) if resid_scale_bits else 8,
+            residual_topk=int(residual_topk) if residual_topk else 2,
+            v_bits=int(v_bits) if v_bits else 4,
+            v_group_size=int(v_group_size) if v_group_size else 64,
+            v_scale_dtype=v_scale_dtype or "float16",
+            v_enabled=(v_enabled == "1"),
+            block_tokens=int(block_tokens) if block_tokens else 256,
         )
         obj = cls(cfg)
         impl = obj._impl
         pipeline = impl.pipeline
-        pipeline._d_head = int(d_head)    if d_head    else None
-        pipeline._d_pad  = int(d_pad)     if d_pad     else None
-        pipeline._v_dim  = int(value_dim) if value_dim else None
-        pipeline._v_pad  = int(v_pad)     if v_pad     else None
-        impl._dtype      = dtype_name or None
-        obj.state        = state
+        pipeline._d_head = int(d_head) if d_head else None
+        pipeline._d_pad = int(d_pad) if d_pad else None
+        pipeline._v_dim = int(value_dim) if value_dim else None
+        pipeline._v_pad = int(v_pad) if v_pad else None
+        impl._dtype = dtype_name or None
+        obj.state = state
         return obj

@@ -12,6 +12,7 @@ Prints a table like:
   main_bits=3 group=64      256     4.00     0.42   9.6x    0.12     0.18
   ...
 """
+
 import os
 import sys
 import time
@@ -78,13 +79,14 @@ def _bench_encode(cache_factory, T: int) -> float:
     k1, v1 = _make_kv(1)
     t0 = time.perf_counter()
     for _ in range(REPS):
-            k1, v1 = _make_kv(1)
-            c.update_and_fetch(k1, v1)
-            # Evaluate after every addition to be fair on latency measurement for generation step.
-            if hasattr(c, "k_packed") and getattr(c, "k_packed", None) is not None:
-                mx.eval(c.k_packed)
-            else:
-                if hasattr(c, "keys"): mx.eval(c.keys)
+        k1, v1 = _make_kv(1)
+        c.update_and_fetch(k1, v1)
+        # Evaluate after every addition to be fair on latency measurement for generation step.
+        if hasattr(c, "k_packed") and getattr(c, "k_packed", None) is not None:
+            mx.eval(c.k_packed)
+        else:
+            if hasattr(c, "keys"):
+                mx.eval(c.keys)
     elapsed = (time.perf_counter() - t0) / REPS * 1000
     return elapsed
 

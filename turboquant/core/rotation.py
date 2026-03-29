@@ -18,6 +18,7 @@ All rotation matrices are computed once and never re-randomised.
 ``save`` / ``load`` persist the raw matrix so calibrated deployments can
 reproduce the exact rotation without re-running QR.
 """
+
 from __future__ import annotations
 
 import math
@@ -97,7 +98,9 @@ class FixedRotation:
 
         self._R: mx.array | None = None
         self._RT: mx.array | None = None
-        self._can_use_fast_hadamard = (self.rotation_type == "hadamard" and _is_power_of_two(dim))
+        self._can_use_fast_hadamard = (
+            self.rotation_type == "hadamard" and _is_power_of_two(dim)
+        )
 
         if rotation_type not in ("identity", "hadamard", "random_orthogonal"):
             raise ValueError(

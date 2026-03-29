@@ -24,6 +24,7 @@ from mlx_lm.models.cache import KVCache
 
 # ─── Fixtures ────────────────────────────────────────────────────────────────
 
+
 def _make_dense_prompt_cache(offset: int, heads: int = 2, head_dim: int = 8):
     """Build a list[KVCache] whose .keys/.values carry `offset` filled tokens."""
     cache = KVCache()  # KVCache takes no init args; shape inferred on first use
@@ -36,6 +37,7 @@ def _make_dense_prompt_cache(offset: int, heads: int = 2, head_dim: int = 8):
 
 # ─── Tests ────────────────────────────────────────────────────────────────────
 
+
 def test_noop_when_threshold_is_none():
     """maybe_turboquant_k_cache is a no-op when turboquant_k_start=None."""
     prompt_cache = _make_dense_prompt_cache(offset=20)
@@ -47,7 +49,7 @@ def test_noop_when_threshold_is_none():
         turboquant_main_bits=3,
         turboquant_group_size=64,
         turboquant_rotation="identity",
-            turboquant_return_mode="view",
+        turboquant_return_mode="view",
         turboquant_resid_scale_bits=8,
         turboquant_residual_topk=2,
         turboquant_v_bits=4,
@@ -69,7 +71,7 @@ def test_noop_before_threshold():
         turboquant_main_bits=3,
         turboquant_group_size=64,
         turboquant_rotation="identity",
-            turboquant_return_mode="view",
+        turboquant_return_mode="view",
         turboquant_resid_scale_bits=8,
         turboquant_residual_topk=2,
         turboquant_v_bits=4,
@@ -91,9 +93,9 @@ def test_upgrades_at_threshold():
         prompt_cache,
         turboquant_k_start=threshold,
         turboquant_main_bits=3,
-        turboquant_group_size=8,   # small so head_dim=8 is divisible
+        turboquant_group_size=8,  # small so head_dim=8 is divisible
         turboquant_rotation="identity",
-            turboquant_return_mode="view",
+        turboquant_return_mode="view",
         turboquant_resid_scale_bits=8,
         turboquant_residual_topk=2,
         turboquant_v_bits=4,
@@ -118,7 +120,7 @@ def test_preserves_offset_and_state_shape():
         turboquant_main_bits=3,
         turboquant_group_size=8,
         turboquant_rotation="identity",
-            turboquant_return_mode="view",
+        turboquant_return_mode="view",
         turboquant_resid_scale_bits=8,
         turboquant_residual_topk=2,
         turboquant_v_bits=4,
@@ -145,7 +147,7 @@ def test_idempotent():
         turboquant_main_bits=3,
         turboquant_group_size=8,
         turboquant_rotation="identity",
-            turboquant_return_mode="view",
+        turboquant_return_mode="view",
         turboquant_resid_scale_bits=8,
         turboquant_residual_topk=2,
         turboquant_v_bits=4,
@@ -158,7 +160,9 @@ def test_idempotent():
     assert isinstance(first, TurboQuantKCache)
 
     maybe_turboquant_k_cache(prompt_cache, **kwargs)
-    assert prompt_cache[0] is first, "Second call should return the same TurboQuantKCache"
+    assert prompt_cache[0] is first, (
+        "Second call should return the same TurboQuantKCache"
+    )
     assert isinstance(prompt_cache[0], TurboQuantKCache)
 
 
@@ -173,7 +177,7 @@ def test_upgrade_preserves_residual_topk():
         turboquant_main_bits=3,
         turboquant_group_size=8,
         turboquant_rotation="identity",
-            turboquant_return_mode="view",
+        turboquant_return_mode="view",
         turboquant_resid_scale_bits=8,
         turboquant_residual_topk=4,
         turboquant_v_bits=4,
@@ -201,7 +205,7 @@ def test_upgraded_cache_accepts_more_tokens():
         turboquant_main_bits=3,
         turboquant_group_size=8,
         turboquant_rotation="identity",
-            turboquant_return_mode="view",
+        turboquant_return_mode="view",
         turboquant_resid_scale_bits=8,
         turboquant_residual_topk=2,
         turboquant_v_bits=4,

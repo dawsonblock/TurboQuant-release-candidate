@@ -5,6 +5,7 @@ This conftest is retained so that ``pytest turboquant/tests/`` still adds the
 project root to sys.path (needed if someone runs from that directory directly).
 Canonical test command: ``pytest tests/``
 """
+
 import os
 import sys
 

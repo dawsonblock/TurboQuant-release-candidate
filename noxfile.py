@@ -21,7 +21,7 @@ def tests(session: nox.Session) -> None:
     session.run("pytest", "tests/unit/", *session.posargs)
 
 
-@nox.session(python="3.11") # Linting only needs to run on one version
+@nox.session(python="3.11")  # Linting only needs to run on one version
 def lint(session: nox.Session) -> None:
     """Run linting using ruff."""
     # Install ruff

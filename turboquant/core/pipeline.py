@@ -24,6 +24,7 @@ V path (encode/decode): same but NO rotation, no residual.
 No Python branches in the hot path: the rotation type and residual_topk are
 resolved to concrete operations at ``__init__`` time.
 """
+
 from __future__ import annotations
 
 import mlx.core as mx
@@ -119,14 +120,18 @@ class TurboQuantPipeline:
             self._d_head = d_head
             self._d_pad = _round_up(d_head, self.config.k_group_size)
         elif self._d_head != d_head:
-            raise TurboQuantShapeError(f"K head dimension mismatch: expected {self._d_head}, got {d_head}")
+            raise TurboQuantShapeError(
+                f"K head dimension mismatch: expected {self._d_head}, got {d_head}"
+            )
 
     def _bind_v_shape_once(self, d_head: int) -> None:
         if self._v_dim is None:
             self._v_dim = d_head
             self._v_pad = _round_up(d_head, self.config.v_group_size)
         elif self._v_dim != d_head:
-            raise TurboQuantShapeError(f"V head dimension mismatch: expected {self._v_dim}, got {d_head}")
+            raise TurboQuantShapeError(
+                f"V head dimension mismatch: expected {self._v_dim}, got {d_head}"
+            )
 
     # ── K encode ─────────────────────────────────────────────────────────────
 
@@ -155,7 +160,7 @@ class TurboQuantPipeline:
 
         # Rotate
         rot = self._get_rotation(D)
-        y = rot.forward(keys)                          # [B, H, T, D]
+        y = rot.forward(keys)  # [B, H, T, D]
 
         # Pad
         if d_pad > D:
@@ -166,13 +171,17 @@ class TurboQuantPipeline:
 
         # Quantise
         quant = self._get_k_quant()
-        packed_k, k_scales = quant.encode(y_pad)       # [..., n_words], [..., ng]
+        packed_k, k_scales = quant.encode(y_pad)  # [..., n_words], [..., ng]
 
         # Residual (topk)
         resid_vals = resid_idx = None
         if cfg.residual_topk > 0:
             y_hat = dequantize_groups(
-                packed_k, k_scales, cfg.k_bits, cfg.k_group_size, d_pad  # type: ignore
+                packed_k,
+                k_scales,
+                cfg.k_bits,
+                cfg.k_group_size,
+                d_pad,  # type: ignore
             )
             residual = y_pad - y_hat
             resid_vals, resid_idx = encode_topk_residual(
@@ -208,9 +217,7 @@ class TurboQuantPipeline:
 
     # ── V encode / decode ─────────────────────────────────────────────────────
 
-    def encode_v(
-        self, values: mx.array
-    ) -> tuple[mx.array, mx.array]:
+    def encode_v(self, values: mx.array) -> tuple[mx.array, mx.array]:
         """Encode values: [B, H, T, D] → (packed_v, v_scales).
 
         No rotation, no residual.

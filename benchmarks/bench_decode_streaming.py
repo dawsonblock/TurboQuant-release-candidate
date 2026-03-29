@@ -14,6 +14,7 @@ Sample output:
       256           64         0.45         0.38      0.84x
       ...
 """
+
 import os
 import sys
 import time
@@ -70,7 +71,7 @@ def _fill_cache(T: int, block_tokens: int):
 
 def _baseline_attn(q, k, v) -> mx.array:
     """Simple sdpa with materialised kv (no streaming)."""
-    scale = HEAD_DIM ** -0.5
+    scale = HEAD_DIM**-0.5
     k_t = k.swapaxes(-1, -2)
     scores = (q @ k_t) * scale
     weights = mx.softmax(scores.astype(mx.float32), axis=-1).astype(q.dtype)
@@ -86,7 +87,7 @@ def main():
     print(hdr)
     print("-" * len(hdr))
 
-    scale = HEAD_DIM ** -0.5
+    scale = HEAD_DIM**-0.5
 
     for T in SEQ_LENS:
         for bt in BLOCK_TOKENS_LIST:

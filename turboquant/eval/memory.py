@@ -23,6 +23,7 @@ Typical usage
     # {'dense_cache_bytes': 2097152, 'tq_cache_bytes': 524288,
     #   'ratio': 4.0, 'n_layers': 18}
 """
+
 from __future__ import annotations
 
 import mlx.core as mx
@@ -63,9 +64,15 @@ def peak_memory_bytes(cache_list) -> int:
 def _array_bytes(a: mx.array) -> int:
     """Return byte size of a single MLX array."""
     itemsize = {
-        mx.float16: 2, mx.bfloat16: 2, mx.float32: 4,
-        mx.int8: 1, mx.uint8: 1, mx.int16: 2, mx.uint16: 2,
-        mx.int32: 4, mx.uint32: 4,
+        mx.float16: 2,
+        mx.bfloat16: 2,
+        mx.float32: 4,
+        mx.int8: 1,
+        mx.uint8: 1,
+        mx.int16: 2,
+        mx.uint16: 2,
+        mx.int32: 4,
+        mx.uint32: 4,
     }.get(a.dtype, 4)
     size = 1
     for d in a.shape:
@@ -114,8 +121,10 @@ def memory_report(
         upgrade_cache_list(tq_cache, k_start=k_start, config=turboquant_config)
         model(input_ids, cache=tq_cache)
         tq_arrs = [
-            getattr(c, "k_packed", getattr(c, "k_codes", None)) for c in tq_cache
-            if hasattr(c, "k_codes") and getattr(c, "k_packed", getattr(c, "k_codes", None)) is not None
+            getattr(c, "k_packed", getattr(c, "k_codes", None))
+            for c in tq_cache
+            if hasattr(c, "k_codes")
+            and getattr(c, "k_packed", getattr(c, "k_codes", None)) is not None
         ]
         if tq_arrs:
             mx.eval(*tq_arrs)
@@ -125,7 +134,7 @@ def memory_report(
 
     return {
         "dense_cache_bytes": dense_bytes,
-        "tq_cache_bytes":    tq_bytes,
-        "ratio":             round(ratio, 2) if ratio is not None else None,
-        "n_layers":          len(dense_cache),
+        "tq_cache_bytes": tq_bytes,
+        "ratio": round(ratio, 2) if ratio is not None else None,
+        "n_layers": len(dense_cache),
     }

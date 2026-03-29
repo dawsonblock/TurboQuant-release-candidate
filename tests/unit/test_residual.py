@@ -9,6 +9,7 @@ Invariants verified
   energy (for typical k / group_size ratios).
 * Shape contract: output shape equals input shape.
 """
+
 import mlx.core as mx
 import numpy as np
 import pytest
@@ -31,9 +32,7 @@ def test_output_shape(k, group_size):
     vals, idx = encode_topk_residual(r, k=k, group_size=group_size)
     r_hat = decode_topk_residual(vals, idx, group_size)
     mx.eval(r_hat)
-    assert r_hat.shape == r.shape, (
-        f"Shape mismatch: {r_hat.shape} vs {r.shape}"
-    )
+    assert r_hat.shape == r.shape, f"Shape mismatch: {r_hat.shape} vs {r.shape}"
 
 
 @pytest.mark.parametrize("k,group_size", [(2, 8), (4, 16)])
@@ -48,19 +47,19 @@ def test_topk_round_trip_at_topk_positions(k, group_size):
     r_hat = decode_topk_residual(vals, idx, group_size)
     mx.eval(r, r_hat, vals, idx)
 
-    r_np   = np.array(r)
+    r_np = np.array(r)
     hat_np = np.array(r_hat)
     idx_np = np.array(idx)
 
     ng = d_pad // group_size
-    r_grp  = r_np.reshape(ng, group_size)
+    r_grp = r_np.reshape(ng, group_size)
     hat_grp = hat_np.reshape(ng, group_size)
 
     for g in range(ng):
         for ki in range(k):
             pos = int(idx_np.reshape(ng, k)[g, ki])
             orig = float(r_grp[g, pos])
-            rec  = float(hat_grp[g, pos])
+            rec = float(hat_grp[g, pos])
             assert abs(orig - rec) < 1e-3, (
                 f"group {g} position {pos}: orig={orig:.4f} rec={rec:.4f}"
             )
@@ -76,8 +75,8 @@ def test_energy_capture(k):
     r_hat = decode_topk_residual(vals, idx, group_size)
     mx.eval(r, r_hat)
 
-    total_energy = float(mx.sum(r ** 2).item())
-    captured     = float(mx.sum(r_hat ** 2).item())
+    total_energy = float(mx.sum(r**2).item())
+    captured = float(mx.sum(r_hat**2).item())
     ratio = captured / (total_energy + 1e-8)
 
     # k/group_size fraction of variance; allow 20 % slack

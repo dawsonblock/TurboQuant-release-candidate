@@ -9,6 +9,7 @@ Invariants verified
 * Group boundaries are respected.
 * Unsupported bit widths raise immediately.
 """
+
 import mlx.core as mx
 import numpy as np
 import pytest
@@ -29,6 +30,7 @@ def _rand(shape, lo=-2.0, hi=2.0, seed=1):
 
 # ── Pack / unpack ─────────────────────────────────────────────────────────────
 
+
 @pytest.mark.parametrize("bits", [2, 3, 4, 8])
 def test_pack_unpack_round_trip(bits):
     """pack(unpack(codes)) must equal codes."""
@@ -37,19 +39,16 @@ def test_pack_unpack_round_trip(bits):
     d = n_words * cpw
     np.random.seed(42)
     qmax = (1 << bits) - 1
-    raw = mx.array(
-        np.random.randint(0, qmax + 1, (2, 4, d), dtype=np.uint32)
-    )
+    raw = mx.array(np.random.randint(0, qmax + 1, (2, 4, d), dtype=np.uint32))
     build_caches(bits)
     packed = pack_codes(raw, bits)
     recovered = unpack_codes(packed, d, bits)
     mx.eval(recovered)
-    assert mx.array_equal(raw, recovered), (
-        f"Pack/unpack mismatch for bits={bits}"
-    )
+    assert mx.array_equal(raw, recovered), f"Pack/unpack mismatch for bits={bits}"
 
 
 # ── Encode / decode ───────────────────────────────────────────────────────────
+
 
 @pytest.mark.parametrize("bits,group_size", [(3, 32), (4, 64), (8, 128)])
 def test_encode_decode_shape(bits, group_size):
@@ -60,9 +59,7 @@ def test_encode_decode_shape(bits, group_size):
     packed, scales = q.encode(x)
     x_hat = q.decode(packed, scales, D)
     mx.eval(x_hat)
-    assert x_hat.shape == x.shape, (
-        f"Shape mismatch: {x_hat.shape} vs {x.shape}"
-    )
+    assert x_hat.shape == x.shape, f"Shape mismatch: {x_hat.shape} vs {x.shape}"
 
 
 @pytest.mark.parametrize("bits,group_size", [(3, 8), (4, 16)])
@@ -78,24 +75,19 @@ def test_encode_decode_accuracy(bits, group_size):
     signal_range = float(mx.max(x).item() - mx.min(x).item())
     err = float(mx.mean(mx.abs(x - x_hat)).item())
     rel = err / (signal_range + 1e-8)
-    assert rel < 0.05, (
-        f"bits={bits} group={group_size}: rel err = {rel:.3f} > 5 %"
-    )
+    assert rel < 0.05, f"bits={bits} group={group_size}: rel err = {rel:.3f} > 5 %"
 
 
 # ── Calibration ───────────────────────────────────────────────────────────────
+
 
 def test_calibration_reduces_error():
     """Calibrated quantiser must not be worse than uncalibrated."""
     np.random.seed(99)
     D = 128
     N = 512
-    calib_data = mx.array(
-        np.random.randn(N, D).astype(np.float32) * 0.5
-    )
-    x = mx.array(
-        np.random.randn(1, 1, 16, D).astype(np.float32) * 0.5
-    )
+    calib_data = mx.array(np.random.randn(N, D).astype(np.float32) * 0.5)
+    x = mx.array(np.random.randn(1, 1, 16, D).astype(np.float32) * 0.5)
 
     q_dyn = GroupScalarQuantizer(n_bits=4, group_size=64)
     pk_d, sc_d = q_dyn.encode(x)

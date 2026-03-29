@@ -9,6 +9,7 @@ Invariants verified
 * Calibration path runs without error.
 * rotate_queries returns correct shape.
 """
+
 import mlx.core as mx
 import numpy as np
 import pytest
@@ -97,9 +98,7 @@ def test_residual_improves_accuracy():
     pk4, ks4, rv4, ri4 = p4.encode_k(x)
     err4 = _rel_err(p4.rotate_queries(x), p4.decode_k_rotated(pk4, ks4, rv4, ri4))
 
-    assert err4 < err0, (
-        f"Residual did not help: err0={err0:.4f} err4={err4:.4f}"
-    )
+    assert err4 < err0, f"Residual did not help: err0={err0:.4f} err4={err4:.4f}"
 
 
 def test_v_round_trip(base_cfg):

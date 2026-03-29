@@ -1,4 +1,3 @@
-
 def decode_k_metal(
     packed_k,
     scales,

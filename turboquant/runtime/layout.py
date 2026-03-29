@@ -5,6 +5,7 @@ All tensors entering the compression pipeline must be [B, H, T, D].
 ``ensure_layout`` validates the shape and returns the tensor unchanged
 (MLX arrays are always contiguous; no copy is needed).
 """
+
 from __future__ import annotations
 
 import mlx.core as mx
@@ -29,7 +30,5 @@ def ensure_layout(x: mx.array, name: str = "tensor") -> mx.array:
         )
     B, H, T, D = x.shape
     if B == 0 or H == 0 or T == 0 or D == 0:
-        raise ValueError(
-            f"All dimensions must be > 0; got {name}.shape = {x.shape}."
-        )
+        raise ValueError(f"All dimensions must be > 0; got {name}.shape = {x.shape}.")
     return x

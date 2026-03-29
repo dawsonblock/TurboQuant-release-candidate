@@ -1,6 +1,7 @@
 """
 Durable state persistence for KV buffers.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -17,6 +18,7 @@ def _compute_checksum(file_path: Path) -> str:
             hasher.update(chunk)
     return hasher.hexdigest()
 
+
 def save_state(state: dict[str, Any], path: str | Path) -> None:
     """Save state robustly with write-then-rename."""
     path = Path(path)
@@ -32,6 +34,7 @@ def save_state(state: dict[str, Any], path: str | Path) -> None:
             temp_path.unlink()
         raise TurboQuantStateError(f"Failed to reliably persist state: {e}")
 
+
 def load_state(path: str | Path) -> dict[str, Any]:
     """Load and optionally verify checksum of the state."""
     path = Path(path)
@@ -39,6 +42,6 @@ def load_state(path: str | Path) -> dict[str, Any]:
         raise TurboQuantStateError(f"State file not found: {path}")
 
     try:
-        return {} # Placeholder to avoid loading complex np logic in this quick stub
+        return {}  # Placeholder to avoid loading complex np logic in this quick stub
     except Exception as e:
         raise TurboQuantStateError(f"State file is corrupt (invalid JSON): {e}")

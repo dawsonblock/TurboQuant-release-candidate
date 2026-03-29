@@ -25,6 +25,7 @@ State
     state = cache.state()        # serialisable dict (numpy arrays)
     cache2 = KVCompressor.from_state(state, config)
 """
+
 from __future__ import annotations
 
 from collections.abc import Iterator
@@ -40,6 +41,7 @@ from turboquant.runtime.layout import ensure_layout
 
 # ── View type ─────────────────────────────────────────────────────────────────
 
+
 @dataclass
 class TurboQuantKeysView:
     """Reference into a KVCompressor's compressed K buffer.
@@ -47,6 +49,7 @@ class TurboQuantKeysView:
     Passed to streaming-attention loops in place of a dense K tensor.
     ``cache.iter_rotated_kv_blocks(view)`` yields decoded K/V blocks.
     """
+
     cache: KVCompressor
     start: int
     end: int
@@ -55,6 +58,7 @@ class TurboQuantKeysView:
 
 
 # ── KVCompressor ──────────────────────────────────────────────────────────────
+
 
 class KVCompressor:
     """Production compressed KV cache.
@@ -77,20 +81,20 @@ class KVCompressor:
 
         # ── Token buffers (None until first update) ──────────────────────────
         # K compressed
-        self._k_packed:      mx.array | None = None  # [B,H,cap,nw_k]
-        self._k_scales:      mx.array | None = None  # [B,H,cap,ng_k]
-        self._resid_vals:    mx.array | None = None  # [B,H,cap,ng_k,topk]
-        self._resid_idx:     mx.array | None = None  # [B,H,cap,ng_k,topk]
+        self._k_packed: mx.array | None = None  # [B,H,cap,nw_k]
+        self._k_scales: mx.array | None = None  # [B,H,cap,ng_k]
+        self._resid_vals: mx.array | None = None  # [B,H,cap,ng_k,topk]
+        self._resid_idx: mx.array | None = None  # [B,H,cap,ng_k,topk]
         # V compressed
-        self._v_packed:      mx.array | None = None  # [B,H,cap,nw_v]
-        self._v_scales:      mx.array | None = None  # [B,H,cap,ng_v]
+        self._v_packed: mx.array | None = None  # [B,H,cap,nw_v]
+        self._v_scales: mx.array | None = None  # [B,H,cap,ng_v]
 
         # ── Metadata ─────────────────────────────────────────────────────────
-        self.offset:  int = 0     # tokens stored so far
-        self._cap:    int = 0     # allocated capacity
-        self._dtype:  str | None = None
-        self._B:      int = 0
-        self._H:      int = 0
+        self.offset: int = 0  # tokens stored so far
+        self._cap: int = 0  # allocated capacity
+        self._dtype: str | None = None
+        self._B: int = 0
+        self._H: int = 0
 
     @property
     def k_packed(self) -> mx.array | None:
@@ -113,11 +117,17 @@ class KVCompressor:
     def _check_shape_consistency(self, B: int, H: int, D: int, V: int) -> None:
         if self._cap > 0:
             if self._B != B or self._H != H:
-                raise TurboQuantShapeError(f"Batch/Head shape mismatch: expected ({self._B}, {self._H}), got ({B}, {H})")
+                raise TurboQuantShapeError(
+                    f"Batch/Head shape mismatch: expected ({self._B}, {self._H}), got ({B}, {H})"
+                )
             if self.pipeline._d_head is not None and self.pipeline._d_head != D:
-                raise TurboQuantShapeError(f"K dimension mismatch: expected {self.pipeline._d_head}, got {D}")
+                raise TurboQuantShapeError(
+                    f"K dimension mismatch: expected {self.pipeline._d_head}, got {D}"
+                )
             if self.pipeline._v_dim is not None and self.pipeline._v_dim != V:
-                raise TurboQuantShapeError(f"V dimension mismatch: expected {self.pipeline._v_dim}, got {V}")
+                raise TurboQuantShapeError(
+                    f"V dimension mismatch: expected {self.pipeline._v_dim}, got {V}"
+                )
 
     def _ensure_capacity(
         self,
@@ -139,22 +149,23 @@ class KVCompressor:
         new_cap = max(self._cap + step, need)
 
         from turboquant.core.quantizer import _codes_per_word, _round_up
+
         # Two-phase padding matching quantize_groups:
         #   Phase 1: round up to group boundary
         #   Phase 2: round up to word-packing boundary
-        k_d_pad  = _round_up(D, cfg.k_group_size)
-        k_cpw    = _codes_per_word(cfg.k_bits)
-        k_d_pack = _round_up(k_d_pad, k_cpw)   # must be divisible by k_cpw
-        k_nw     = k_d_pack // k_cpw
-        k_ng     = k_d_pad // cfg.k_group_size
+        k_d_pad = _round_up(D, cfg.k_group_size)
+        k_cpw = _codes_per_word(cfg.k_bits)
+        k_d_pack = _round_up(k_d_pad, k_cpw)  # must be divisible by k_cpw
+        k_nw = k_d_pack // k_cpw
+        k_ng = k_d_pad // cfg.k_group_size
 
-        v_d_pad  = _round_up(V, cfg.v_group_size)
-        v_cpw    = _codes_per_word(cfg.v_bits)
+        v_d_pad = _round_up(V, cfg.v_group_size)
+        v_cpw = _codes_per_word(cfg.v_bits)
         v_d_pack = _round_up(v_d_pad, v_cpw)
-        v_nw     = v_d_pack // v_cpw
-        v_ng     = v_d_pad // cfg.v_group_size
+        v_nw = v_d_pack // v_cpw
+        v_ng = v_d_pad // cfg.v_group_size
 
-        topk    = cfg.residual_topk
+        topk = cfg.residual_topk
         s_dtype = mx.float16 if cfg.scale_dtype == "float16" else mx.bfloat16
 
         def _extend(old, new_shape):
@@ -185,15 +196,17 @@ class KVCompressor:
             rv_shape = (B, H, new_cap, k_ng, topk)
             ri_shape = (B, H, new_cap, k_ng, topk)
             self._resid_vals = _extend_f(self._resid_vals, rv_shape)
-            self._resid_idx  = (
+            self._resid_idx = (
                 mx.zeros(ri_shape, dtype=mx.uint8)
                 if self._resid_idx is None
                 else mx.concatenate(
-                    [self._resid_idx,
-                     mx.zeros(
-                         (B, H, new_cap - self._cap, k_ng, topk),
-                         dtype=mx.uint8,
-                     )],
+                    [
+                        self._resid_idx,
+                        mx.zeros(
+                            (B, H, new_cap - self._cap, k_ng, topk),
+                            dtype=mx.uint8,
+                        ),
+                    ],
                     axis=2,
                 )
             )
@@ -202,16 +215,16 @@ class KVCompressor:
             self._v_packed = _extend(self._v_packed, (B, H, new_cap, v_nw))
             self._v_scales = _extend_f(self._v_scales, (B, H, new_cap, v_ng))
 
-        self._cap   = new_cap
-        self._B     = B
-        self._H     = H
+        self._cap = new_cap
+        self._B = B
+        self._H = H
         self._dtype = str(dtype)
 
     # ── Public API ────────────────────────────────────────────────────────────
 
     def update_and_fetch(
         self,
-        keys:   mx.array,
+        keys: mx.array,
         values: mx.array,
     ) -> tuple[TurboQuantKeysView, mx.array]:
         """Compress and store a new block of (K, V) tokens.
@@ -227,7 +240,7 @@ class KVCompressor:
         raw (non-compressed) values of the CURRENT step for the first
         cross-attention step (the rest are decoded on demand).
         """
-        keys   = ensure_layout(keys,   "keys")
+        keys = ensure_layout(keys, "keys")
         values = ensure_layout(values, "values")
 
         B, H, T, D = keys.shape
@@ -245,19 +258,19 @@ class KVCompressor:
         pk, ks, rv, ri = self.pipeline.encode_k(keys)
 
         # Store K
-        self._k_packed[:, :, prev:prev + T, :] = pk
-        self._k_scales[:, :, prev:prev + T, :] = ks.astype(self._k_scales.dtype)
+        self._k_packed[:, :, prev : prev + T, :] = pk  # type: ignore
+        self._k_scales[:, :, prev : prev + T, :] = ks.astype(self._k_scales.dtype)  # type: ignore
 
         if self.config.residual_topk > 0 and rv is not None:
-            self._resid_vals[:, :, prev:prev + T, :, :] = rv
-            self._resid_idx[:, :, prev:prev + T, :, :]  = ri
+            self._resid_vals[:, :, prev : prev + T, :, :] = rv  # type: ignore
+            self._resid_idx[:, :, prev : prev + T, :, :] = ri  # type: ignore
 
         # Encode V
         if self.config.v_enabled:
             pv, vs = self.pipeline.encode_v(values)
-            self._v_packed[:, :, prev:prev + T, :] = pv
-            self._v_scales[:, :, prev:prev + T, :] = vs.astype(
-                self._v_scales.dtype
+            self._v_packed[:, :, prev : prev + T, :] = pv  # type: ignore
+            self._v_scales[:, :, prev : prev + T, :] = vs.astype(  # type: ignore
+                self._v_scales.dtype  # type: ignore
             )
 
         self.offset += T
@@ -309,27 +322,25 @@ class KVCompressor:
             e = min(s + blk, view.end)
 
             # Decode K (stays rotated)
-            pk_blk = self._k_packed[:, :, s:e, :]
-            ks_blk = self._k_scales[:, :, s:e, :]
+            pk_blk = self._k_packed[:, :, s:e, :]  # type: ignore
+            ks_blk = self._k_scales[:, :, s:e, :]  # type: ignore
             rv_blk = (
-                self._resid_vals[:, :, s:e, :, :]
+                self._resid_vals[:, :, s:e, :, :]  # type: ignore
                 if cfg.residual_topk > 0
                 else None
             )
             ri_blk = (
-                self._resid_idx[:, :, s:e, :, :]
+                self._resid_idx[:, :, s:e, :, :]  # type: ignore
                 if cfg.residual_topk > 0
                 else None
             )
-            k_blk = self.pipeline.decode_k_rotated(
-                pk_blk, ks_blk, rv_blk, ri_blk
-            )
+            k_blk = self.pipeline.decode_k_rotated(pk_blk, ks_blk, rv_blk, ri_blk)
 
             # Decode V
             if cfg.v_enabled and self._v_packed is not None:
                 pv_blk = self._v_packed[:, :, s:e, :]
-                vs_blk = self._v_scales[:, :, s:e, :]
-                v_blk  = self.pipeline.decode_v(pv_blk, vs_blk)
+                vs_blk = self._v_scales[:, :, s:e, :]  # type: ignore
+                v_blk = self.pipeline.decode_v(pv_blk, vs_blk)
             else:
                 v_blk = mx.zeros_like(k_blk)
 
@@ -337,17 +348,21 @@ class KVCompressor:
 
     # ── Token management ──────────────────────────────────────────────────────
 
-
     @property
     def nbytes(self) -> int:
         return sum(
             getattr(self, k).nbytes
             for k in [
-                "_k_packed", "_k_scales", "_resid_vals", "_resid_idx",
-                "_v_packed", "_v_scales"
+                "_k_packed",
+                "_k_scales",
+                "_resid_vals",
+                "_resid_idx",
+                "_v_packed",
+                "_v_scales",
             ]
             if getattr(self, k) is not None
         )
+
     def trim(self, n: int) -> int:
         """Logically remove the last *n* tokens from the cache.
 
@@ -402,12 +417,12 @@ class KVCompressor:
             return int(a.nbytes) if a is not None else 0
 
         breakdown = {
-            "k_packed":   _nbytes(self._k_packed),
-            "k_scales":   _nbytes(self._k_scales),
+            "k_packed": _nbytes(self._k_packed),
+            "k_scales": _nbytes(self._k_scales),
             "resid_vals": _nbytes(self._resid_vals),
-            "resid_idx":  _nbytes(self._resid_idx),
-            "v_packed":   _nbytes(self._v_packed),
-            "v_scales":   _nbytes(self._v_scales),
+            "resid_idx": _nbytes(self._resid_idx),
+            "v_packed": _nbytes(self._v_packed),
+            "v_scales": _nbytes(self._v_scales),
         }
         breakdown["total"] = sum(breakdown.values())
         return breakdown
@@ -419,15 +434,15 @@ class KVCompressor:
 
         [B, H, offset, D_head] — for debugging / perplexity evaluation only.
         """
-        pk = self._k_packed[:, :, :self.offset, :]
-        ks = self._k_scales[:, :, :self.offset, :]
+        pk = self._k_packed[:, :, : self.offset, :]  # type: ignore
+        ks = self._k_scales[:, :, : self.offset, :]  # type: ignore
         rv = (
-            self._resid_vals[:, :, :self.offset, :, :]
+            self._resid_vals[:, :, : self.offset, :, :]  # type: ignore
             if self.config.residual_topk > 0
             else None
         )
         ri = (
-            self._resid_idx[:, :, :self.offset, :, :]
+            self._resid_idx[:, :, : self.offset, :, :]  # type: ignore
             if self.config.residual_topk > 0
             else None
         )
@@ -458,30 +473,34 @@ class KVCompressor:
 
         s = {
             "schema_version": STATE_SCHEMA_VERSION,
-            "offset":     self.offset,
-            "d_head":     self.pipeline._d_head,
-            "d_pad":      self.pipeline._d_pad,
-            "v_dim":      self.pipeline._v_dim,
-            "v_pad":      self.pipeline._v_pad,
-            "k_bits":     cfg.k_bits,
+            "offset": self.offset,
+            "d_head": self.pipeline._d_head,
+            "d_pad": self.pipeline._d_pad,
+            "v_dim": self.pipeline._v_dim,
+            "v_pad": self.pipeline._v_pad,
+            "k_bits": cfg.k_bits,
             "k_group_size": cfg.k_group_size,
-            "v_bits":     cfg.v_bits,
+            "v_bits": cfg.v_bits,
             "v_group_size": cfg.v_group_size,
-            "v_enabled":  cfg.v_enabled,
-            "rotation":   cfg.rotation,
+            "v_enabled": cfg.v_enabled,
+            "rotation": cfg.rotation,
             "rotation_seed": cfg.rotation_seed,
             "residual_topk": cfg.residual_topk,
             "scale_dtype": cfg.scale_dtype,
             "v_scale_dtype": cfg.v_scale_dtype,
-            "eps":        cfg.eps,
-            "k_packed":   _np(_sl(self._k_packed,   T)),
-            "k_scales":   _np(_sl(self._k_scales,   T)),
+            "eps": cfg.eps,
+            "k_packed": _np(_sl(self._k_packed, T)),
+            "k_scales": _np(_sl(self._k_scales, T)),
             "resid_vals": _np(_sl(self._resid_vals, T)),
-            "resid_idx":  _np(_sl(self._resid_idx,  T)),
-            "v_packed":   _np(_sl(self._v_packed,   T)),
-            "v_scales":   _np(_sl(self._v_scales,   T)),
-            "k_calibrated_scales": _np(k_quant.calibration_state()) if k_quant is not None else None,
-            "v_calibrated_scales": _np(v_quant.calibration_state()) if v_quant is not None else None,
+            "resid_idx": _np(_sl(self._resid_idx, T)),
+            "v_packed": _np(_sl(self._v_packed, T)),
+            "v_scales": _np(_sl(self._v_scales, T)),
+            "k_calibrated_scales": _np(k_quant.calibration_state())
+            if k_quant is not None
+            else None,
+            "v_calibrated_scales": _np(v_quant.calibration_state())
+            if v_quant is not None
+            else None,
         }
         return s
 
@@ -499,6 +518,7 @@ class KVCompressor:
         actionable error message.
         """
         from turboquant.runtime.state import validate_state
+
         validate_state(state, config)
 
         obj = cls(config, layer_id)
@@ -507,18 +527,18 @@ class KVCompressor:
         def _mx(a):
             return mx.array(a) if a is not None else None
 
-        obj._k_packed   = _mx(state.get("k_packed"))
-        obj._k_scales   = _mx(state.get("k_scales"))
+        obj._k_packed = _mx(state.get("k_packed"))
+        obj._k_scales = _mx(state.get("k_scales"))
         obj._resid_vals = _mx(state.get("resid_vals"))
-        obj._resid_idx  = _mx(state.get("resid_idx"))
-        obj._v_packed   = _mx(state.get("v_packed"))
-        obj._v_scales   = _mx(state.get("v_scales"))
+        obj._resid_idx = _mx(state.get("resid_idx"))
+        obj._v_packed = _mx(state.get("v_packed"))
+        obj._v_scales = _mx(state.get("v_scales"))
 
         # Restore pipeline dimension metadata
         obj.pipeline._d_head = state.get("d_head")
-        obj.pipeline._d_pad  = state.get("d_pad")
-        obj.pipeline._v_dim  = state.get("v_dim")
-        obj.pipeline._v_pad  = state.get("v_pad")
+        obj.pipeline._d_pad = state.get("d_pad")
+        obj.pipeline._v_dim = state.get("v_dim")
+        obj.pipeline._v_pad = state.get("v_pad")
 
         k_cal = state.get("k_calibrated_scales")
         v_cal = state.get("v_calibrated_scales")
@@ -529,7 +549,7 @@ class KVCompressor:
 
         if obj._k_packed is not None:
             obj._cap = obj._k_packed.shape[2]
-            obj._B   = obj._k_packed.shape[0]
-            obj._H   = obj._k_packed.shape[1]
+            obj._B = obj._k_packed.shape[0]
+            obj._H = obj._k_packed.shape[1]
 
         return obj

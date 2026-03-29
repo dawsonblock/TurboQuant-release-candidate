@@ -21,6 +21,7 @@ def test_memory_ratio_stable():
     dense_bytes = k.nbytes + v.nbytes
     assert comp.nbytes < dense_bytes * 0.5, "Memory ratio exceeds acceptable threshold"
 
+
 def test_no_full_decode_allocation():
     cfg = TurboQuantConfig(k_bits=3, k_group_size=64, residual_topk=2, mode="fast")
     comp = KVCompressor(cfg)
@@ -35,4 +36,6 @@ def test_no_full_decode_allocation():
     # Ensure properties that check if it dynamically created a generic full flat K tensor are absent
     # Since streaming blocks chunks directly, size should equal the block size limit iterations.
     for s, e, k_blk, v_blk in comp.iter_rotated_kv_blocks(keys_view):
-        assert k_blk.shape[-2] <= cfg.block_tokens, "Allocated full dense chunk rather than block limit."
+        assert k_blk.shape[-2] <= cfg.block_tokens, (
+            "Allocated full dense chunk rather than block limit."
+        )

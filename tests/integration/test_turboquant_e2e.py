@@ -35,8 +35,8 @@ class _TinyLM(nn.Module):
         # Bias toward token 1 so argmax sampling is deterministic.
         # Construct via concatenation to avoid MLX in-place issues.
         before = mx.zeros((b, t, 1), dtype=mx.float32)
-        one    = mx.ones( (b, t, 1), dtype=mx.float32)
-        after  = mx.zeros((b, t, self.vocab_size - 2), dtype=mx.float32)
+        one = mx.ones((b, t, 1), dtype=mx.float32)
+        after = mx.zeros((b, t, self.vocab_size - 2), dtype=mx.float32)
         return mx.concatenate([before, one, after], axis=-1)
 
 
@@ -55,7 +55,7 @@ def _make_prompt_cache(offset=0):
 
 def test_generate_step_smoke_without_turboquant():
     model = _TinyLM(vocab_size=16)
-    prompt = mx.array([2, 3, 4], dtype=mx.int32)   # 1-D: generate_step slices [seq]
+    prompt = mx.array([2, 3, 4], dtype=mx.int32)  # 1-D: generate_step slices [seq]
     prompt_cache = _make_prompt_cache(offset=0)
 
     gen = generate_step(

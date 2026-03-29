@@ -23,5 +23,6 @@ def run_bench():
 
     print(f"K-Encode Benchmark: {(end - start) / 100 * 1000:.2f} ms / step")
 
+
 if __name__ == "__main__":
     run_bench()

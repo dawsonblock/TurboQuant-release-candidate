@@ -27,16 +27,16 @@ from mlx_lm.models.gemma import Attention, ModelArgs
 
 # ─── Shared parameters ───────────────────────────────────────────────────────
 
-HEAD_DIM    = 8
-N_HEADS     = 4
-N_KV_HEADS  = 2
-HIDDEN_SIZE = N_HEADS * HEAD_DIM   # 32
-GROUP_SIZE  = 8
+HEAD_DIM = 8
+N_HEADS = 4
+N_KV_HEADS = 2
+HIDDEN_SIZE = N_HEADS * HEAD_DIM  # 32
+GROUP_SIZE = 8
 BLOCK_TOKENS = 2
 V_GROUP_SIZE = 8
 
-PREFILL_LEN = 16   # must be divisible by GROUP_SIZE and BLOCK_TOKENS
-BATCH       = 1
+PREFILL_LEN = 16  # must be divisible by GROUP_SIZE and BLOCK_TOKENS
+BATCH = 1
 
 
 def _model_args():
@@ -80,6 +80,7 @@ def _make_kv(seq_len: int):
 
 # ─── 1. update_and_fetch – dequant mode ──────────────────────────────────────
 
+
 def test_update_and_fetch_dequant_mode():
     """Dequant mode returns dense key/value arrays after prefill."""
     tq = _make_tq_cache(return_mode="dequant")
@@ -96,6 +97,7 @@ def test_update_and_fetch_dequant_mode():
 
 
 # ─── 2. update_and_fetch – view mode ─────────────────────────────────────────
+
 
 def test_update_and_fetch_view_mode():
     """View mode returns a TurboQuantKeysView (lazy iterator handle)."""
@@ -114,6 +116,7 @@ def test_update_and_fetch_view_mode():
 
 # ─── 3. state roundtrip ───────────────────────────────────────────────────────
 
+
 def test_state_roundtrip():
     """state / meta_state / from_state round-trips preserve offset and block_tokens."""
     tq = _make_tq_cache(return_mode="dequant")
@@ -121,19 +124,19 @@ def test_state_roundtrip():
     tq.update_and_fetch(k, v)
 
     state_dict = tq.state
-    meta        = tq.meta_state
+    meta = tq.meta_state
 
     tq2 = TurboQuantKCache.from_state(state_dict, meta)
     assert tq2.offset == tq.offset, (
         f"Offset mismatch after roundtrip: {tq2.offset} vs {tq.offset}"
     )
     assert tq2.config.block_tokens == tq.config.block_tokens, (
-        f"block_tokens mismatch: {tq2.config.block_tokens} vs "
-        f"{tq.config.block_tokens}"
+        f"block_tokens mismatch: {tq2.config.block_tokens} vs {tq.config.block_tokens}"
     )
 
 
 # ─── 4. block iterator covers all tokens ─────────────────────────────────────
+
 
 def test_block_iterator_covers_all_tokens():
     """iter_rotated_kv_blocks yields blocks whose ranges cover [0, PREFILL_LEN)."""
@@ -159,10 +162,11 @@ def test_block_iterator_covers_all_tokens():
 
 # ─── 5. Gemma attention with standard KVCache ────────────────────────────────
 
+
 def test_gemma_attention_with_kvcache():
     """Attention.__call__ works normally with a plain KVCache."""
-    args  = _model_args()
-    attn  = Attention(args)
+    args = _model_args()
+    attn = Attention(args)
     cache = KVCache()  # shape inferred on first update_and_fetch call
 
     seq_len = 4
@@ -177,11 +181,12 @@ def test_gemma_attention_with_kvcache():
 
 # ─── 6. Gemma attention with TurboQuantKCache (view mode) ────────────────────
 
+
 def test_gemma_attention_with_turboquant():
     """Attention.__call__ dispatches to streaming attention with TurboQuantKCache."""
-    args  = _model_args()
-    attn  = Attention(args)
-    tq    = _make_tq_cache(return_mode="view")
+    args = _model_args()
+    attn = Attention(args)
+    tq = _make_tq_cache(return_mode="view")
 
     # prefill: run a longer sequence to populate the cache
     prefill_x = mx.zeros((BATCH, PREFILL_LEN, HIDDEN_SIZE))
@@ -200,9 +205,10 @@ def test_gemma_attention_with_turboquant():
 
 # ─── 7. Incremental decode accumulates offset ────────────────────────────────
 
+
 def test_incremental_decode():
     """Multiple single-token decode steps each increment offset by 1."""
-    tq  = _make_tq_cache(return_mode="dequant")
+    tq = _make_tq_cache(return_mode="dequant")
     k, v = _make_kv(PREFILL_LEN)
     tq.update_and_fetch(k, v)
     assert tq.offset == PREFILL_LEN
@@ -217,6 +223,7 @@ def test_incremental_decode():
 
 # ─── 8. Storage dominated by 3-bit codes ─────────────────────────────────────
 
+
 def test_storage_breakdown_keys():
     """3-bit packed codes use fewer bits-per-token than float16."""
     tq = _make_tq_cache(return_mode="dequant")
@@ -227,7 +234,7 @@ def test_storage_breakdown_keys():
     dense_per_token = N_KV_HEADS * HEAD_DIM * 2  # float16
 
     # 3-bit codes: how many uint32 words per token?
-    cpw = 32 // 3   # codes per uint32 word = 10
+    cpw = 32 // 3  # codes per uint32 word = 10
     words_per_pos = math.ceil(HEAD_DIM / cpw)  # ceil(8/10) = 1
     k_code_bytes_per_token = N_KV_HEADS * words_per_pos * 4  # uint32
 

@@ -10,5 +10,6 @@ def run_bench():
     # TQ
     print("TurboQuant Cache: int8/int4 compressed bytes footprint")
 
+
 if __name__ == "__main__":
     run_bench()

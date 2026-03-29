@@ -10,6 +10,7 @@ Invariants verified
 * Save / load: persisted matrix reproduces identical results.
 * Hadamard path stays orthogonal for non-power-of-two dimensions.
 """
+
 import mlx.core as mx
 import numpy as np
 import pytest
@@ -24,12 +25,15 @@ def _rand(shape, seed=0):
     return mx.array(np.random.randn(*shape).astype(np.float32))
 
 
-@pytest.mark.parametrize("dim,rtype", [
-    (64, "hadamard"),
-    (64, "random_orthogonal"),
-    (80, "hadamard"),
-    (80, "random_orthogonal"),
-])
+@pytest.mark.parametrize(
+    "dim,rtype",
+    [
+        (64, "hadamard"),
+        (64, "random_orthogonal"),
+        (80, "hadamard"),
+        (80, "random_orthogonal"),
+    ],
+)
 def test_rotation_determinism(dim, rtype):
     """Two instances with the same seed must produce the same matrix."""
     r1 = FixedRotation(dim, seed=42, rotation_type=rtype)
@@ -57,12 +61,15 @@ def test_hadamard_is_seed_independent():
     assert diff < 1e-5, "Hadamard matrices differ across seeds"
 
 
-@pytest.mark.parametrize("dim,rtype", [
-    (64, "hadamard"),
-    (64, "random_orthogonal"),
-    (80, "hadamard"),
-    (80, "random_orthogonal"),
-])
+@pytest.mark.parametrize(
+    "dim,rtype",
+    [
+        (64, "hadamard"),
+        (64, "random_orthogonal"),
+        (80, "hadamard"),
+        (80, "random_orthogonal"),
+    ],
+)
 def test_rotation_orthogonality(dim, rtype):
     """R^T R should be close to identity."""
     rot = FixedRotation(dim, seed=42, rotation_type=rtype)
@@ -74,12 +81,15 @@ def test_rotation_orthogonality(dim, rtype):
     assert err < ATOL, f"Orthogonality violation for {rtype} dim={dim}: {err:.2e}"
 
 
-@pytest.mark.parametrize("dim,rtype", [
-    (64, "identity"),
-    (64, "hadamard"),
-    (64, "random_orthogonal"),
-    (80, "hadamard"),
-])
+@pytest.mark.parametrize(
+    "dim,rtype",
+    [
+        (64, "identity"),
+        (64, "hadamard"),
+        (64, "random_orthogonal"),
+        (80, "hadamard"),
+    ],
+)
 def test_rotation_round_trip(dim, rtype):
     """inverse(forward(x)) must recover x."""
     rot = FixedRotation(dim, seed=42, rotation_type=rtype)
@@ -101,7 +111,9 @@ def test_identity_is_noop():
     assert rot.inverse(x) is x
 
 
-@pytest.mark.parametrize("dim,rtype", [(64, "hadamard"), (80, "hadamard"), (64, "random_orthogonal")])
+@pytest.mark.parametrize(
+    "dim,rtype", [(64, "hadamard"), (80, "hadamard"), (64, "random_orthogonal")]
+)
 def test_save_load_round_trip(tmp_path, dim, rtype):
     """Saved matrix must reproduce identical forward pass."""
     path = str(tmp_path / f"rot_{rtype}_{dim}.npy")
