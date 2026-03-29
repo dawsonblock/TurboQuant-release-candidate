@@ -14,11 +14,20 @@ PYTHON_VERSIONS = ["3.9", "3.10", "3.11"]
 @nox.session(python=PYTHON_VERSIONS)
 def tests(session: nox.Session) -> None:
     """Run the test suite."""
-    # Install the package with test dependencies
-    session.install(".[test]")
+    # Install the package with test dependencies. MLX limits >=0.30.0 prevent python3.9. 
+    if session.python == "3.9":
+        session.install(".[test]")
+    else:
+        session.install(".[test,apple]")
 
-    # Run the tests using pytest
-    session.run("pytest", "tests/unit/", *session.posargs)
+    # Run the tests using pytest with coverage
+    session.run(
+        "pytest",
+        "--cov=turboquant",
+        "--cov-report=term-missing",
+        "tests/unit/",
+        *session.posargs,
+    )
 
 
 @nox.session(python="3.11")  # Linting only needs to run on one version
