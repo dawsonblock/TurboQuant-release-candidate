@@ -17,19 +17,13 @@ kernel void decode_k(
 ) {
     int g = gid / group_size;
 
-    // Load scale into threadgroup memory
-    threadgroup half shared_scale;
-    if (tid == 0) {
-        shared_scale = scales[g];
-    }
-    threadgroup_barrier(mem_flags::mem_threadgroup);
-
-    // unpack (example for 4-bit)
-    uint word = packed[gid / 8];
-    int shift = (gid % 8) * bits;
+    // unpack
+    int elements_in_uint = 32 / bits;
+    uint word = packed[gid / elements_in_uint];
+    int shift = (gid % elements_in_uint) * bits;
     uint code = (word >> shift) & ((1 << bits) - 1);
 
-    float scale = (float)shared_scale;
+    float scale = (float)scales[g];
     float val = (float(code) * scale);
 
     // residual add using simdgroup operations if possible, otherwise threadgroup
