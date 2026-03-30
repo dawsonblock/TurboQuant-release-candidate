@@ -37,4 +37,3 @@ make test-static      # nox -s tests_static (no MLX needed)
 make test-mlx         # nox -s tests_mlx   (Apple Silicon only)
 make validate-apple   # ./scripts/validate_apple_silicon.sh
 ```
-

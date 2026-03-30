@@ -34,12 +34,14 @@ codes_per_word = floor(32 / b)
 n_words        = ceil(d_pad / codes_per_word)
 k_packed.shape = [B, H, T, n_words]
 ```
+
 Each uint32 stores `codes_per_word` b-bit unsigned integers in the **low bits
 first** order:
 
 ```text
 word = code[0] | (code[1] << b) | (code[2] << 2b) | ...
 ```
+
 Unpacking extracts each code as `(word >> (i * b)) & ((1 << b) - 1)`.
 
 ### Scale format
@@ -50,6 +52,7 @@ One scale per group:
 n_groups      = ceil(d_pad / group_size)
 k_scales.shape = [B, H, T, n_groups]
 ```
+
 Dequantisation: `x_float = (code - zero) * scale`  where `zero = (1 << b) / 2`
 (symmetric unsigned-to-signed mapping).
 
@@ -63,6 +66,7 @@ with checkpoints written before schema v2:
 ```python
 (k_codes, k_scales, None, None, None, v_codes, v_scales)
 ```
+
 Indices 2–4 (residual sign-sketch fields) are always `None` in the production
 path.  `TurboQuantKCache.from_state(state, meta_state)` accepts this 7-tuple
 plus a 18-element string tuple (`meta_state`) that encodes all config fields as
@@ -91,6 +95,7 @@ index  field
 16     block_tokens
 17     state_version (str "2")
 ```
+
 ---
 
 ## 3. State validation

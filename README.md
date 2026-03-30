@@ -28,6 +28,7 @@ TurboQuant compresses the KV cache of transformer models running on Apple Silico
 Dense KV cache (fp16, 1K tokens, 2 heads, head_dim=128)   1024 KB
 TurboQuant (3-bit K + 4-bit V, group=64)                   ~252 KB   ▸ ~4× smaller
 ```
+
 | | Dense | TurboQuant |
 |---|:---:|:---:|
 | K storage | fp16 | **3-bit** + per-group scale + sparse residual |
@@ -66,7 +67,9 @@ Decode K (streaming attention)
   packed_codes ──▶ dequant ──▶ + topk_residual ──▶ crop ──▶ [B,H,T,D]
   (queries are rotated with the same FixedRotation before the matmul)
 ```
+
 **Key design choices:**
+
 - **Hadamard-family whitening** — exact dense Hadamard matrix for power-of-two head dims, or a deterministic Hadamard-derived orthogonal fallback otherwise; the rotation equalises per-dimension variance while preserving `R.T @ R = I`. *Not* a fast butterfly transform — cost is O(d²) per token.
 - **Top-k sparse residual** — stores the k=2 largest-magnitude quantisation errors per group (fp16 value + uint8 index); recovers the dominant signal the main quantiser misses
 - **Two-phase bit-packing** — pad to group boundary, then to word boundary; handles any bit-width (including 3-bit) for any head-dim
@@ -82,6 +85,7 @@ git clone https://github.com/dawsonblock/TurboQuant
 cd TurboQuant
 python -m pip install -e '.[apple]'
 ```
+
 `mlx` only installs on Apple Silicon. On non-Apple runners, use the packaging and syntax checks only.
 
 ---
@@ -105,6 +109,7 @@ for start, end, k_blk, v_blk in cache.iter_rotated_kv_blocks(view):
     # standard online-softmax attention over (q_rot, k_blk, v_blk)
     ...
 ```
+
 ### Wiring into mlx-lm generation
 
 ```python
@@ -119,6 +124,7 @@ cfg    = TurboQuantConfig(k_bits=3, k_group_size=64, rotation="hadamard")
 events = upgrade_cache_list(cache, k_start=64, config=cfg)
 # decode loop continues with TurboQuant cache
 ```
+
 ### Optional: offline calibration
 
 ```python
@@ -133,6 +139,7 @@ calibrate(
 )
 # pipeline now uses fitted per-group scales → lower quantisation error
 ```
+
 ### Tune the config
 
 ```python
@@ -144,10 +151,10 @@ config = TurboQuantConfig(
     v_enabled=False,                   # disable V compression if headroom exists
 )
 ```
+
 ### Legacy mlx-lm cache
 
 `turboquant_return_mode` and `turboquant_resid_scale_bits` remain in the legacy shim for backward compatibility, but the production upgrade path ignores them. Real residual behavior is controlled by `residual_topk`.
-
 
 ```python
 from mlx_lm.models.cache import TurboQuantConfig, TurboQuantKCache
@@ -157,7 +164,10 @@ cache = TurboQuantKCache(
                      return_mode="view", v_bits=4, v_enabled=True)
 )
 ```
+
 ---
+
+## Running tests
 
 ## Running tests
 
@@ -196,6 +206,7 @@ python benchmarks/bench_decode_streaming.py
 # Classic per-step latency
 python benchmarks/decode_latency.py
 ```
+
 Sample output from `bench_memory_footprint.py`:
 
 ```text
@@ -204,6 +215,7 @@ dense (float16)             16     --    1024       2.10        2048       1.0×
 TurboQuant k=3b g=64         3     64    1024       0.52         512       4.0×
 TurboQuant k=2b g=64         2     64    1024       0.43         416       4.9×
 ```
+
 ---
 
 ## Evaluation
@@ -226,6 +238,7 @@ drift = drift_report(model, input_ids, turboquant_config=cfg)
 mem = memory_report(model, input_ids, turboquant_config=cfg)
 # → {'dense_cache_bytes': 2097152, 'tq_cache_bytes': 524288, 'ratio': 4.0}
 ```
+
 See [docs/evaluation.md](docs/evaluation.md) for interpretation guidance.
 
 ---
@@ -244,6 +257,7 @@ See [docs/evaluation.md](docs/evaluation.md) for interpretation guidance.
   ──────────────────────────
   total            ~252 KB    vs 1024 KB dense  (4.1× compression)
 ```
+
 ---
 
 ## Project layout
@@ -297,6 +311,7 @@ docs/
 ├── integration.md             Step-by-step wiring guide for new models
 └── evaluation.md              Metrics reference, benchmark workflow, thresholds
 ```
+
 ---
 
 ## Status
