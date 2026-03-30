@@ -191,7 +191,8 @@ def llama_model_and_tokenizer(llama_model_id: str):
     """Load the Llama-family model and tokenizer once per session."""
     from mlx_lm import load
 
-    model, tokenizer = load(llama_model_id)
+    result = load(llama_model_id)
+    model, tokenizer = result[0], result[1]
     return model, tokenizer
 
 
@@ -200,5 +201,6 @@ def gemma_model_and_tokenizer(gemma_model_id: str):
     """Load the Gemma-family model and tokenizer once per session."""
     from mlx_lm import load
 
-    model, tokenizer = load(gemma_model_id)
+    result = load(gemma_model_id)
+    model, tokenizer = result[0], result[1]
     return model, tokenizer

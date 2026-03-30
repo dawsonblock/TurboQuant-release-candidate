@@ -10,6 +10,7 @@ Requires:
 from __future__ import annotations
 
 import time
+from typing import Any
 
 import pytest
 import mlx.core as mx
@@ -36,6 +37,7 @@ def _generate_text(
     from mlx_lm import generate as mlx_generate
     from mlx_lm.generate import generate_step
     from mlx_lm.models import cache as cache_mod
+    from mlx_lm.sample_utils import make_sampler
 
     t0 = time.perf_counter()
 
@@ -55,7 +57,7 @@ def _generate_text(
     prompt_tokens = mx.array(input_ids)
 
     # Build generation kwargs
-    gen_kwargs = dict(
+    gen_kwargs: dict[str, Any] = dict(
         max_tokens=max_tokens,
     )
     if turboquant_k_start is not None:
@@ -74,7 +76,7 @@ def _generate_text(
     tokens = []
     tq_observed = False
     for token, logprobs in generate_step(
-        prompt_tokens, model, temp=temp, **gen_kwargs
+        prompt_tokens, model, sampler=make_sampler(temp=temp), **gen_kwargs
     ):
         tokens.append(token.item())
         if len(tokens) >= max_tokens:

@@ -10,6 +10,7 @@ Requires:
 from __future__ import annotations
 
 import time
+from typing import Any
 
 import pytest
 import mlx.core as mx
@@ -34,6 +35,7 @@ def _generate_text(
 ) -> dict:
     """Run generation and return a diagnostic dict."""
     from mlx_lm.generate import generate_step
+    from mlx_lm.sample_utils import make_sampler
 
     t0 = time.perf_counter()
 
@@ -52,7 +54,7 @@ def _generate_text(
     input_ids = tokenizer.encode(text)
     prompt_tokens = mx.array(input_ids)
 
-    gen_kwargs = dict(max_tokens=max_tokens)
+    gen_kwargs: dict[str, Any] = dict(max_tokens=max_tokens)
     if turboquant_k_start is not None:
         gen_kwargs["turboquant_k_start"] = turboquant_k_start
         gen_kwargs["turboquant_main_bits"] = 3
@@ -67,7 +69,7 @@ def _generate_text(
 
     tokens = []
     for token, logprobs in generate_step(
-        prompt_tokens, model, temp=temp, **gen_kwargs
+        prompt_tokens, model, sampler=make_sampler(temp=temp), **gen_kwargs
     ):
         tokens.append(token.item())
         if len(tokens) >= max_tokens:

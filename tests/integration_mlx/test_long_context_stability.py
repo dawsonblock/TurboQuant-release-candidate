@@ -171,6 +171,7 @@ class TestLongContextModelSmoke:
     ):
         """Llama generation with a long prompt and TurboQuant."""
         from mlx_lm.generate import generate_step
+        from mlx_lm.sample_utils import make_sampler
 
         model, tokenizer = llama_model_and_tokenizer
 
@@ -193,7 +194,7 @@ class TestLongContextModelSmoke:
         for token, _ in generate_step(
             prompt_tokens,
             model,
-            temp=0.0,
+            sampler=make_sampler(temp=0.0),
             max_tokens=decode_settings["max_tokens"],
             turboquant_k_start=0,
             turboquant_main_bits=3,
