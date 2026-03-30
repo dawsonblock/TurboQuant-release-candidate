@@ -332,7 +332,7 @@ docs/
 | Benchmarks (memory / latency / streaming) | ✅ `benchmarks/` |
 | Architecture + integration docs | ✅ `docs/` |
 | Other architectures (Mistral, Phi, …) | ⬜ needs per-arch patch |
-| Fused Metal kernel (decode & dequant) | ✅ threadgroup & simdgroup optimized |
+| Fused Metal kernel (decode & dequant) | ⬜ experimental integration in progress |
 | Perplexity / quality benchmarks at scale | ⬜ not yet measured |
 
 ---
@@ -341,7 +341,7 @@ docs/
 
 - **Quality unmeasured** — compression ratio is real; perplexity impact at scale has not been benchmarked. Use `turboquant.eval.perplexity_report` and `drift_report` to measure on your data.
 - **Gemma + Llama wired** — `turboquant_streaming_attention` is dispatched in both. Adding a new architecture is a [one-function change](docs/integration.md#adding-a-new-model-family).
-- **Kernel optimization in progress** — while a high-performance `decode_k.metal` kernel is available using `threadgroup` and `simdgroup` features, the rotation + pack encode step is still Python-level MLX and could be fully unified in Metal.
+- **Kernel optimization in progress** — custom Metal kernel integration remains experimental and is not part of the supported default runtime yet.
 - **Hadamard is O(d²)** — not a fast butterfly transform. For very large head-dims, `rotation="identity"` is faster with marginally worse compression.
 
 ---
