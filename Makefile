@@ -1,7 +1,7 @@
 PYTHON ?= python3
 PIP ?= uv pip
 
-.PHONY: help install-dev install-apple compile lint typecheck test test-static test-mlx certify-apple-runtime build-dist validate-apple clean
+.PHONY: help install-dev install-apple compile lint typecheck test test-static test-mlx test-structural test-path-proof certify-apple-runtime certify-structural build-dist validate-apple clean
 
 help:
 	@printf "Targets:\n"
@@ -13,7 +13,10 @@ help:
 	@printf "  test                     Alias for test-static (safe on any platform)\n"
 	@printf "  test-static              Run static unit tests (no MLX required)\n"
 	@printf "  test-mlx                 Run MLX integration tests (Apple Silicon only)\n"
+	@printf "  test-structural          Run structural integration tests (no model weights)\n"
+	@printf "  test-path-proof          Verify TQ path is exercised, not dense fallback\n"
 	@printf "  certify-apple-runtime    Full Apple-Silicon runtime certification\n"
+	@printf "  certify-structural       Structural cert only (no model weights needed)\n"
 	@printf "  build-dist               Build wheel and sdist\n"
 	@printf "  validate-apple           Run Apple Silicon runtime validation script\n"
 	@printf "  clean                    Remove build artifacts\n"
@@ -40,6 +43,15 @@ test-static:
 
 test-mlx:
 	nox -s tests_mlx
+
+test-structural:
+	$(PYTHON) -m pytest tests/integration_mlx/ -v --tb=short -k "not llama and not gemma"
+
+test-path-proof:
+	$(PYTHON) -m pytest tests/integration_mlx/test_path_not_dense_fallback.py -v --tb=short
+
+certify-structural:
+	$(PYTHON) -m pytest tests/integration_mlx/ -v --tb=short -k "not llama and not gemma" --junitxml=artifacts/junit_structural.xml
 
 certify-apple-runtime:
 	./scripts/certify_apple_runtime.sh
