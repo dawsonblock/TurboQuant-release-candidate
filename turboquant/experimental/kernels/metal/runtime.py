@@ -2,33 +2,12 @@ import os
 from pathlib import Path
 import mlx.core as mx
 
-_kernel_source = """
-    uint gid = thread_position_in_grid.x;
-    
-    uint g = gid / GROUP_SIZE;
-
-    // unpack
-    uint elements_in_uint = 32u / BITS;
-    uint word = packed[gid / elements_in_uint];
-    uint shift = (gid % elements_in_uint) * BITS;
-    uint code = (word >> shift) & ((1u << BITS) - 1u);
-
-    float scale = (float)scales[g];
-    float val = (float(code) * scale);
-
-    // residual add
-    uint local_idx = gid % GROUP_SIZE;
-
-    #pragma unroll
-    for (uint i = 0; i < TOPK; i++) {
-        bool match = (resid_idx[g * TOPK + i] == local_idx);
-        val += match ? (float)resid_vals[g * TOPK + i] : 0.0f;
-    }
-
-    out[gid] = half(val);
-"""
-
 _kernels = {}
+
+def get_kernel_source():
+    kernel_path = Path(__file__).parent / "decode_k.metal"
+    with open(kernel_path, "r") as f:
+        return f.read()
 
 def decode_k_metal(
     packed_k: mx.array,
@@ -47,7 +26,7 @@ def decode_k_metal(
             name="decode_k",
             input_names=["packed", "scales", "resid_idx", "resid_vals"],
             output_names=["out"],
-            source=_kernel_source,
+            source=get_kernel_source(),
         )
 
     kernel = _kernels[cache_key]
@@ -62,14 +41,22 @@ def decode_k_metal(
     threadgroup = (threadgroup_size, 1, 1)
 
     out_shape = packed_k.shape[:-1] + (d_head,)
+    n_groups = scales.shape[-1]
+    n_words = packed_k.shape[-1]
     
     out = kernel(
         inputs=[packed_k, scales, resid_idx, resid_vals],
-        template=[("BITS", config.k_bits), ("GROUP_SIZE", config.k_group_size), ("TOPK", config.residual_topk)], 
+        output_shapes=[out_shape],
+        output_dtypes=[mx.float16],
         grid=grid,
         threadgroup=threadgroup,
-        output_shapes=[out_shape], 
-        output_dtypes=[mx.float16],
+        template=[
+            ("BITS", config.k_bits), 
+            ("GROUP_SIZE", config.k_group_size), 
+            ("TOPK", config.residual_topk),
+            ("N_GROUPS", n_groups),
+            ("N_WORDS", n_words)
+        ],
         stream=mx.gpu
     )
 
