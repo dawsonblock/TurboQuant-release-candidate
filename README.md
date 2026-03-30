@@ -27,7 +27,7 @@ TurboQuant compresses the KV cache of transformer models running on Apple Silico
 ```text
 Dense KV cache (fp16, 1K tokens, 2 heads, head_dim=128)   1024 KB
 TurboQuant (3-bit K + 4-bit V, group=64)                   ~252 KB   ▸ ~4× smaller
-```text
+```
 | | Dense | TurboQuant |
 |---|:---:|:---:|
 | K storage | fp16 | **3-bit** + per-group scale + sparse residual |
@@ -65,7 +65,7 @@ TurboQuant (3-bit K + 4-bit V, group=64)                   ~252 KB   ▸ ~4× sm
 Decode K (streaming attention)
   packed_codes ──▶ dequant ──▶ + topk_residual ──▶ crop ──▶ [B,H,T,D]
   (queries are rotated with the same FixedRotation before the matmul)
-```text
+```
 **Key design choices:**
 - **Hadamard-family whitening** — exact dense Hadamard matrix for power-of-two head dims, or a deterministic Hadamard-derived orthogonal fallback otherwise; the rotation equalises per-dimension variance while preserving `R.T @ R = I`. *Not* a fast butterfly transform — cost is O(d²) per token.
 - **Top-k sparse residual** — stores the k=2 largest-magnitude quantisation errors per group (fp16 value + uint8 index); recovers the dominant signal the main quantiser misses
@@ -81,7 +81,7 @@ Decode K (streaming attention)
 git clone https://github.com/dawsonblock/TurboQuant
 cd TurboQuant
 python -m pip install -e '.[apple]'
-```text
+```
 `mlx` only installs on Apple Silicon. On non-Apple runners, use the packaging and syntax checks only.
 
 ---
@@ -104,7 +104,7 @@ q_rot       = cache.rotate_queries(queries)          # rotate Q into K's frame
 for start, end, k_blk, v_blk in cache.iter_rotated_kv_blocks(view):
     # standard online-softmax attention over (q_rot, k_blk, v_blk)
     ...
-```text
+```
 ### Wiring into mlx-lm generation
 
 ```python
@@ -118,7 +118,7 @@ cache = make_prompt_cache(model)
 cfg    = TurboQuantConfig(k_bits=3, k_group_size=64, rotation="hadamard")
 events = upgrade_cache_list(cache, k_start=64, config=cfg)
 # decode loop continues with TurboQuant cache
-```text
+```
 ### Optional: offline calibration
 
 ```python
@@ -132,7 +132,7 @@ calibrate(
     max_batches=64,
 )
 # pipeline now uses fitted per-group scales → lower quantisation error
-```text
+```
 ### Tune the config
 
 ```python
@@ -143,7 +143,7 @@ config = TurboQuantConfig(
     rotation_seed=1337,
     v_enabled=False,                   # disable V compression if headroom exists
 )
-```text
+```
 ### Legacy mlx-lm cache
 
 `turboquant_return_mode` and `turboquant_resid_scale_bits` remain in the legacy shim for backward compatibility, but the production upgrade path ignores them. Real residual behavior is controlled by `residual_topk`.
@@ -156,28 +156,27 @@ cache = TurboQuantKCache(
     TurboQuantConfig(main_bits=3, group_size=64, rotation="hadamard",
                      return_mode="view", v_bits=4, v_enabled=True)
 )
-```text
+```
 ---
 
 ## Running tests
 
 ```bash
-# Full suite — 58 tests in ~5 s
-pytest tests/
+# Static tests — safe on any platform (no MLX needed)
+make test-static
 
-# Unit tests only  (turboquant package, 38 tests)
-pytest tests/unit/
+# MLX-dependent tests — Apple Silicon only
+make test-mlx
+```
 
-# Integration tests only  (mlx_lm + turboquant, 20 tests)
-pytest tests/integration/
-```text
 ## Local runtime validation
 
 For real MLX runtime certification on Apple Silicon, run:
 
 ```bash
-./scripts/validate_local.sh
-```text
+./scripts/validate_apple_silicon.sh
+```
+
 Public CI only checks packaging and syntax. It does not certify MLX runtime behavior. See [docs/validation-local.md](docs/validation-local.md).
 
 ---
@@ -196,7 +195,7 @@ python benchmarks/bench_decode_streaming.py
 
 # Classic per-step latency
 python benchmarks/decode_latency.py
-```text
+```
 Sample output from `bench_memory_footprint.py`:
 
 ```text
@@ -204,7 +203,7 @@ type                      bits  group  tokens   total_MB   bytes/tok   vs_dense
 dense (float16)             16     --    1024       2.10        2048       1.0×
 TurboQuant k=3b g=64         3     64    1024       0.52         512       4.0×
 TurboQuant k=2b g=64         2     64    1024       0.43         416       4.9×
-```text
+```
 ---
 
 ## Evaluation
@@ -226,7 +225,7 @@ drift = drift_report(model, input_ids, turboquant_config=cfg)
 # Cache memory comparison
 mem = memory_report(model, input_ids, turboquant_config=cfg)
 # → {'dense_cache_bytes': 2097152, 'tq_cache_bytes': 524288, 'ratio': 4.0}
-```text
+```
 See [docs/evaluation.md](docs/evaluation.md) for interpretation guidance.
 
 ---
@@ -244,13 +243,15 @@ See [docs/evaluation.md](docs/evaluation.md) for interpretation guidance.
   v_scales            8 KB    per-group fp16 scales
   ──────────────────────────
   total            ~252 KB    vs 1024 KB dense  (4.1× compression)
-```text
+```
 ---
 
 ## Project layout
 
 ```text
 turboquant/
+├── __init__.py                Lazy-import entry point (MLX-free on import)
+├── _deps.py                   has_mlx() / is_apple_silicon() / require_mlx()
 ├── config.py                  TurboQuantConfig — production schema
 ├── core/
 │   ├── rotation.py            FixedRotation (Hadamard / QR / identity)
@@ -280,8 +281,9 @@ mlx_lm/                        patched mlx-lm
 └── generate.py                maybe_turboquant_k_cache (deprecated compatibility shim)
 
 tests/
-├── unit/                      38 turboquant package tests
-└── integration/               20 mlx_lm integration tests
+├── unit_static/               Import + version tests (no MLX needed)
+├── unit/                      38 turboquant package tests (MLX required)
+└── integration/               20 mlx_lm integration tests (MLX required)
 
 benchmarks/
 ├── decode_latency.py
@@ -290,11 +292,11 @@ benchmarks/
 └── bench_decode_streaming.py
 
 docs/
-├── architecture.md            component map, data-flow, memory model
-├── cache-format.md            state dict schema v1, packed uint32 layout
-├── integration.md             step-by-step model wiring guide
-└── evaluation.md              metrics, benchmark workflow, thresholds
-```text
+├── architecture.md            Component map, data-flow, memory model
+├── cache-format.md            State dict schema v2, packed uint32 layout
+├── integration.md             Step-by-step wiring guide for new models
+└── evaluation.md              Metrics reference, benchmark workflow, thresholds
+```
 ---
 
 ## Status
@@ -336,7 +338,7 @@ docs/
 | Doc | Contents |
 |---|---|
 | [docs/architecture.md](docs/architecture.md) | Component map, data-flow diagram, memory model |
-| [docs/cache-format.md](docs/cache-format.md) | State dict schema v1, uint32 packing layout |
+| [docs/cache-format.md](docs/cache-format.md) | State dict schema v2, uint32 packing layout |
 | [docs/integration.md](docs/integration.md) | Step-by-step wiring guide for new models |
 | [docs/evaluation.md](docs/evaluation.md) | Metrics reference, benchmark workflow, thresholds |
 
@@ -355,20 +357,32 @@ docs/
 
 ## Development & Testing
 
-This project uses `nox` and `uv` to manage isolated build matrices and testing environments. 
+This project uses `nox` and `uv` to manage isolated build matrices and testing environments.
 
 First, ensure `uv` or `nox` is installed:
+
 ```bash
 pip install uv nox
-```text
-To run the complete test suite across the supported Python versions (`3.9`, `3.10`, `3.11`, `3.12`) with `pytest-cov` reporting:
+```
+
+To run static tests (safe on any platform):
+
 ```bash
-nox -s tests
-```text
-*(Note: Python 3.9 test targets omit `mlx` installation to bypass unsupported Apple Silicon wheels gracefully).*
+make test-static
+# Or directly: nox -s tests_static
+```
+
+To run MLX-dependent tests (Apple Silicon only):
+
+```bash
+make test-mlx
+# Or directly: nox -s tests_mlx
+```
 
 To run all static code analysis (formatting with `ruff` and type-checking with `mypy`):
+
 ```bash
-make static-check
-# Or natively: nox -s lint typecheck
-```text
+make lint
+make typecheck
+# Or: nox -s lint typecheck
+```
