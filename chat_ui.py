@@ -3,6 +3,7 @@ from mlx_lm import load
 from mlx_lm.generate import stream_generate
 import gradio as gr
 import os
+import time
 
 os.environ["TQ_USE_METAL"] = "1"
 
@@ -10,28 +11,36 @@ model_name = "mlx-community/Llama-3.2-1B-Instruct-4bit"
 print(f"Loading {model_name}...")
 model, tokenizer = load(model_name)
 
-def chat_stream(message, history, max_tokens, temperature, k_bits, group_size):
+# Custom CSS for a ChatGPT-like clean UI
+css = """
+body, .gradio-container {background-color: #343541 !important;}
+.gradio-container * {border-color: #4b4c54 !important;}
+textarea {background-color: #40414f !important; color: #ececf1 !important; outline: none !important; border: 1px solid #565869 !important; border-radius: 8px !important;}
+label, p, h2, h3, span {color: #ececf1 !important;}
+.stats-box {background-color: #202123; padding: 15px; border-radius: 8px; font-family: monospace; border: 1px solid #565869;}
+"""
+
+def user_action(user_message, history):
+    hf = history or []
+    return "", hf + [(user_message, None)]
+
+def bot_action(history, max_tokens, temperature, k_bits, group_size):
+    if not history:
+        yield history, "<div class='stats-box'>Waiting for generation...</div>"
+        return
+        
     messages = []
-    # history is a list of tuples: (user_msg, bot_msg)
-    for h in history:
-        if isinstance(h, dict):
-            if h.get("role") == "user":
-                messages.append({"role": "user", "content": h.get("content", "")})
-            else:
-                messages.append({"role": "assistant", "content": h.get("content", "")})
-        else:
-            if h[0]:
-                messages.append({"role": "user", "content": h[0]})
-            if h[1]:
-                messages.append({"role": "assistant", "content": h[1]})
-                
-    messages.append({"role": "user", "content": message})
+    for m in history[:-1]:
+        if m[0]: messages.append({"role": "user", "content": m[0]})
+        if m[1]: messages.append({"role": "assistant", "content": m[1]})
+        
+    messages.append({"role": "user", "content": history[-1][0]})
     
     prompt = tokenizer.apply_chat_template(
         messages, tokenize=False, add_generation_prompt=True
     )
     
-    response_text = ""
+    history[-1] = (history[-1][0], "")
     
     generator = stream_generate(
         model, 
@@ -44,22 +53,56 @@ def chat_stream(message, history, max_tokens, temperature, k_bits, group_size):
         turboquant_group_size=int(group_size)
     )
     
+    start_time = time.time()
+    tokens = 0
+    
     for response in generator:
         if response.text:
-            response_text += response.text
-            yield response_text
+            history[-1] = (history[-1][0], history[-1][1] + response.text)
+            tokens += 1
+            elapsed = time.time() - start_time
+            tps = tokens / elapsed if elapsed > 0 else 0
+            
+            try:
+                mem_gb = mx.metal.get_active_memory() / (1024**3)
+                mem_format = f"{mem_gb:.2f} GB"
+            except AttributeError:
+                mem_format = "N/A"
+                
+            stats = f"<div class='stats-box'>⚡ <b>Speed:</b> {tps:.2f} tokens/s<br>🧠 <b>Memory:</b> {mem_format}<br>📝 <b>Tokens:</b> {tokens}</div>"
+            
+            yield history, stats
 
-demo = gr.ChatInterface(
-    fn=chat_stream,
-    title="TurboQuant Streaming Chat",
-    description="Interact with the LLM via Metal-Accelerated KV Cache! Try adjusting the compression live without resetting cache.",
-    additional_inputs=[
-        gr.Slider(minimum=10, maximum=1024, value=512, step=1, label="Max Tokens"),
-        gr.Slider(minimum=0.0, maximum=1.5, value=0.7, step=0.1, label="Temperature"),
-        gr.Slider(minimum=2, maximum=8, value=3, step=1, label="KV Cache k_bits"),
-        gr.Dropdown(choices=[32, 64, 128], value=64, label="Group Size (Hardware Alignment)"),
-    ]
-)
+with gr.Blocks(fill_height=True) as demo:
+    gr.HTML("<h2 style='text-align: center; font-family: system-ui;'>TurboQuant ✨ Llama-3.2</h2>")
+    
+    with gr.Row():
+        # Left Sidebar for config and stats
+        with gr.Column(scale=1, min_width=300):
+            with gr.Group():
+                gr.Markdown("### ⚙️ Hardware Settings")
+                max_tokens = gr.Slider(minimum=10, maximum=1024, value=512, step=1, label="Max Tokens")
+                temperature = gr.Slider(minimum=0.0, maximum=1.5, value=0.7, step=0.1, label="Temperature")
+                k_bits = gr.Slider(minimum=2, maximum=8, value=3, step=1, label="KV Cache k_bits")
+                group_size = gr.Dropdown(choices=[32, 64, 128], value=64, label="KV Cache Group Size")
+                
+            gr.Markdown("### 📊 Live Performance")
+            stats_box = gr.HTML(value="<div class='stats-box'>⚡ <b>Speed:</b> 0.00 tokens/s<br>🧠 <b>Memory:</b> 0.00 GB<br>📝 <b>Tokens:</b> 0</div>")
+            
+        # Main Chat Area
+        with gr.Column(scale=4):
+            chatbot = gr.Chatbot(scale=1, container=False, show_label=False)
+            with gr.Row():
+                msg = gr.Textbox(show_label=False, placeholder="Message Llama-3.2...", container=False, scale=8)
+                submit = gr.Button("Send 🚀", scale=1, variant="primary")
+                
+    # Wiring interactions
+    msg.submit(user_action, [msg, chatbot], [msg, chatbot], queue=False).then(
+        bot_action, [chatbot, max_tokens, temperature, k_bits, group_size], [chatbot, stats_box]
+    )
+    submit.click(user_action, [msg, chatbot], [msg, chatbot], queue=False).then(
+        bot_action, [chatbot, max_tokens, temperature, k_bits, group_size], [chatbot, stats_box]
+    )
 
 if __name__ == "__main__":
-    demo.launch(server_port=7860)
+    demo.launch(server_port=7860, css=css, theme=gr.themes.Monochrome())
