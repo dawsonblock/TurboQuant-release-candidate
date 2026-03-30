@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/Users/dawsonblock/Downloads/TurboQuant-release-candidate/test_fallback.py", line 34, in <module>
+    test_shape_compiled()
+  File "/Users/dawsonblock/Downloads/TurboQuant-release-candidate/test_fallback.py", line 31, in test_shape_compiled
+    out = compiled_fallback(packed, scales, None, None, cfg, 128)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: [compile] Function arguments must be trees of arrays or constants (floats, ints, strings, or None), but received type turboquant.config.TurboQuantConfig.

@@ -191,6 +191,34 @@ def quantize_groups(
     return packed, scales.squeeze(-1)
 
 
+_DEQUANT_CACHE = {}
+
+def _inner_dequantize_groups(
+    packed: mx.array,
+    scales: mx.array,
+    bits: int,
+    group_size: int,
+    d_orig: int,
+    cpw: int,
+    q_max: int,
+    n_groups: int,
+    d_pack: int,
+    d_g: int
+) -> mx.array:
+    unsigned = unpack_codes(packed, d_pack, bits)  # [..., d_pack]
+    unsigned = unsigned[..., :d_g]  # crop to group region
+
+    q = unsigned.astype(mx.int32) - q_max  # signed
+    
+    # Needs to handle arbitrary prefix shape for broadcast
+    prefix = packed.shape[:-1]
+    q_f = q.reshape(*prefix, n_groups, group_size).astype(scales.dtype)
+
+    s = scales.reshape(*scales.shape[:-1], scales.shape[-1], 1)
+    out = (q_f * s).reshape(*prefix, d_g)
+    return out[..., :d_orig]
+
+
 def dequantize_groups(
     packed: mx.array,
     scales: mx.array,
@@ -208,16 +236,13 @@ def dequantize_groups(
     n_groups = scales.shape[-1]
     d_g = n_groups * group_size
 
-    unsigned = unpack_codes(packed, d_pack, bits)  # [..., d_pack]
-    unsigned = unsigned[..., :d_g]  # crop to group region
-
-    q = unsigned.astype(mx.int32) - q_max  # signed
-    q_f = q.reshape(*prefix, n_groups, group_size).astype(scales.dtype)
-
-    # scales: [..., n_groups] → [..., n_groups, 1]
-    s = scales.reshape(*scales.shape[:-1], scales.shape[-1], 1)
-    out = (q_f * s).reshape(*prefix, d_g)
-    return out[..., :d_orig]
+    key = (bits, group_size, d_orig, cpw, q_max, n_groups, d_pack, d_g)
+    if key not in _DEQUANT_CACHE:
+        def fn(p, s):
+            return _inner_dequantize_groups(p, s, *key)
+        _DEQUANT_CACHE[key] = mx.compile(fn, shapeless=False)
+        
+    return _DEQUANT_CACHE[key](packed, scales)
 
 
 # ── GroupScalarQuantizer ──────────────────────────────────────────────────────

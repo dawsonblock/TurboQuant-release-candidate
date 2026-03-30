@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/Users/dawsonblock/Downloads/TurboQuant-release-candidate/test_fallback_compile.py", line 21, in <module>
+    test_comp = comp_my_fallback(packed, scales)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: [Primitive::output_shapes] Slice cannot infer output shapes.
