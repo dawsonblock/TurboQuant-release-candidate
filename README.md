@@ -5,7 +5,7 @@
 **Research-grade KV-cache compression for Apple Silicon MLX LLMs**
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://python.org)
-[![MLX](https://img.shields.io/badge/MLX-0.22.0%2B-orange)](https://github.com/ml-explore/mlx)
+[![MLX](https://img.shields.io/badge/MLX-0.30.0%2B-orange)](https://github.com/ml-explore/mlx)
 [![Platform](https://img.shields.io/badge/platform-Apple%20Silicon-black)](https://apple.com/mac)
 
 *3-bit keys · 4-bit values · deterministic rotation · top-k sparse residual · no numpy in the hot path*
@@ -355,7 +355,7 @@ docs/
 | `upgrade_cache_list` cache upgrade API | ✅ canonical, idempotent |
 | Eval suite (perplexity / KL drift / memory) | ✅ `turboquant.eval` |
 | Quality gates (Δppl ≤ 0.5, mean_kl ≤ 0.1) | ✅ `run_quality_eval.py` |
-| MLX version bounds (`[0.22.0, 1.0.0)`) | ✅ enforced at import |
+| MLX version bounds (`[0.30.0, 1.0.0)`) | ✅ enforced at import |
 | Structured logging (`turboquant.*`) | ✅ 6 modules |
 | NaN/overflow guards | ✅ encode + attention |
 | Path-proof tests (no silent dense fallback) | ✅ 9 tests |
@@ -395,7 +395,7 @@ docs/
 |---|---|
 | Platform | macOS · Apple Silicon (M1 / M2 / M3 / M4) |
 | Python | ≥ 3.9 |
-| MLX | ≥ 0.22.0, < 1.0.0 |
+| MLX | ≥ 0.30.0, < 1.0.0 |
 | mlx-lm | vendored v0.29.1 (see [VENDORED_MLX_LM.md](VENDORED_MLX_LM.md)) |
 
 ---

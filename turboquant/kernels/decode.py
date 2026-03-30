@@ -4,9 +4,6 @@ import mlx.core as mx
 
 from turboquant.core.quantizer import dequantize_groups
 from turboquant.core.residual import decode_topk_residual
-from turboquant.kernels.metal.runtime import decode_k_metal
-
-HAS_METAL_KERNEL = False  # Placeholder until fully linked via custom C++ extension
 
 
 def decode_k_block(
@@ -18,13 +15,9 @@ def decode_k_block(
     d_head: int,
 ) -> mx.array:
     """
-    Single entry point for all decode paths.
+    Single entry point for all MLX-vectorized decode paths.
     Must return rotated K.
     """
-    mode = getattr(config, "mode", "research")
-    if mode == "kernel" or HAS_METAL_KERNEL:
-        return decode_k_metal(packed_k, scales, resid_vals, resid_idx, config, d_head)
-
     return decode_k_fallback(packed_k, scales, resid_vals, resid_idx, config, d_head)
 
 

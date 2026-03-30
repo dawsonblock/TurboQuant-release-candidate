@@ -183,30 +183,11 @@ class TurboQuantKCache(_BaseCache):
     def update_and_fetch(self, keys, values):
         """Compress and store keys/values; return (k_out, v_out).
 
-        return_mode="view"   -> k_out is a TurboQuantKeysView (lazy).
-        return_mode="dequant" -> k_out is a dense reconstructed tensor.
+        The legacy return_mode="dequant" is no longer supported.
+        Always returns (TurboQuantKeysView, values) for the streaming path.
         """
         view, _ = self._impl.update_and_fetch(keys, values)
-
-        if self._return_mode == "view":
-            return view, values
-
-        # dequant mode: decode the full K history
-        k_dense = self._impl.decode_k_full()
-
-        if self.config.v_enabled and self._impl.v_packed is not None:
-            impl_view = self._impl._make_view()
-            v_blocks = [
-                vb for _, _, _, vb in self._impl.iter_rotated_kv_blocks(impl_view)
-            ]
-            v_dense = mx.concatenate(v_blocks, axis=2).astype(values.dtype)
-        else:
-            v_dense = values
-
-        return k_dense, v_dense
-
-    def rotate_queries_for_attention(self, queries: mx.array) -> mx.array:
-        return self._impl.rotate_queries_for_attention(queries)
+        return view, values
 
     def iter_rotated_kv_blocks(
         self,

@@ -81,19 +81,6 @@ def _make_kv(seq_len: int):
 # ─── 1. update_and_fetch – dequant mode ──────────────────────────────────────
 
 
-def test_update_and_fetch_dequant_mode():
-    """Dequant mode returns dense key/value arrays after prefill."""
-    tq = _make_tq_cache(return_mode="dequant")
-    k, v = _make_kv(PREFILL_LEN)
-    result_k, result_v = tq.update_and_fetch(k, v)
-
-    assert result_k is not None and result_v is not None
-    assert isinstance(result_k, mx.array), "Expected dense array in dequant mode"
-    assert isinstance(result_v, mx.array), "Expected dense array in dequant mode"
-    assert result_k.shape[-2] == PREFILL_LEN, (
-        f"Key sequence length mismatch: {result_k.shape[-2]} vs {PREFILL_LEN}"
-    )
-    assert tq.offset == PREFILL_LEN
 
 
 # ─── 2. update_and_fetch – view mode ─────────────────────────────────────────

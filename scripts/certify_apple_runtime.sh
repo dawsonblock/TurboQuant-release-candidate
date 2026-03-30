@@ -57,6 +57,7 @@ if [ -z "${VIRTUAL_ENV:-}" ]; then
     fi
     # shellcheck disable=SC1091
     source "$VENV_DIR/bin/activate"
+    pip install --upgrade pip
     echo "Installing package with Apple extras ..."
     pip install --quiet -e '.[apple,test]'
 fi
