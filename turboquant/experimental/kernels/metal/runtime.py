@@ -5,31 +5,30 @@ import mlx.core as mx
 _kernel_source = """
     uint gid = thread_position_in_grid.x;
     
-    int group_size_val = group_size;
-    int bits_val = bits;
-    int topk_val = topk;
-    
-    int g = gid / group_size_val;
+    uint g = gid / GROUP_SIZE;
 
     // unpack
-    int elements_in_uint = 32 / bits_val;
+    uint elements_in_uint = 32u / BITS;
     uint word = packed[gid / elements_in_uint];
-    int shift = (gid % elements_in_uint) * bits_val;
-    uint code = (word >> shift) & ((1 << bits_val) - 1);
+    uint shift = (gid % elements_in_uint) * BITS;
+    uint code = (word >> shift) & ((1u << BITS) - 1u);
 
     float scale = (float)scales[g];
     float val = (float(code) * scale);
 
     // residual add
-    int local_idx = gid % group_size_val;
-    for (int i = 0; i < topk_val; i++) {
-        if (resid_idx[g * topk_val + i] == local_idx) {
-            val += (float)resid_vals[g * topk_val + i];
-        }
+    uint local_idx = gid % GROUP_SIZE;
+
+    #pragma unroll
+    for (uint i = 0; i < TOPK; i++) {
+        bool match = (resid_idx[g * TOPK + i] == local_idx);
+        val += match ? (float)resid_vals[g * TOPK + i] : 0.0f;
     }
 
     out[gid] = half(val);
 """
+
+_kernels = {}
 
 def decode_k_metal(
     packed_k: mx.array,
@@ -39,32 +38,34 @@ def decode_k_metal(
     config,
     d_head: int,
 ):
-    threadgroup_size = int(os.getenv("TQ_THREADGROUP_SIZE", "256"))
+    global _kernels
+    
+    cache_key = (config.k_bits, config.k_group_size, config.residual_topk)
+    
+    if cache_key not in _kernels:
+        _kernels[cache_key] = mx.fast.metal_kernel(
+            name="decode_k",
+            input_names=["packed", "scales", "resid_idx", "resid_vals"],
+            output_names=["out"],
+            source=_kernel_source,
+        )
+
+    kernel = _kernels[cache_key]
+    threadgroup_size = int(os.getenv("TQ_THREADGROUP_SIZE", "64"))
 
     if resid_vals is None:
         resid_vals = mx.zeros((1,), dtype=mx.float16)
         resid_idx = mx.zeros((1,), dtype=mx.uint16)
 
-    bits_arg = mx.array(config.k_bits, dtype=mx.int32)
-    group_size_arg = mx.array(config.k_group_size, dtype=mx.int32)
-    topk_arg = mx.array(config.residual_topk, dtype=mx.int32)
-
     total_elements = scales.size * config.k_group_size
     grid = (total_elements, 1, 1)
     threadgroup = (threadgroup_size, 1, 1)
 
-    kernel = mx.fast.metal_kernel(
-        name="decode_k",
-        input_names=["packed", "scales", "resid_idx", "resid_vals", "bits", "group_size", "topk"],
-        output_names=["out"],
-        source=_kernel_source,
-    )
-
     out_shape = packed_k.shape[:-1] + (d_head,)
     
     out = kernel(
-        inputs=[packed_k, scales, resid_idx, resid_vals, bits_arg, group_size_arg, topk_arg],
-        template=[], 
+        inputs=[packed_k, scales, resid_idx, resid_vals],
+        template=[("BITS", config.k_bits), ("GROUP_SIZE", config.k_group_size), ("TOPK", config.residual_topk)], 
         grid=grid,
         threadgroup=threadgroup,
         output_shapes=[out_shape], 
@@ -73,5 +74,3 @@ def decode_k_metal(
     )
 
     return out[0]
-
-
