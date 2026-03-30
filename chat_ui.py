@@ -15,10 +15,10 @@ model, tokenizer = load(model_name)
 # Custom CSS for a ChatGPT-like clean UI
 css = """
 body, .gradio-container {background-color: #343541 !important;}
-.gradio-container * {border-color: #4b4c54 !important;}
 textarea {background-color: #40414f !important; color: #ececf1 !important; outline: none !important; border: 1px solid #565869 !important; border-radius: 8px !important;}
-label, p, h2, h3, span {color: #ececf1 !important;}
-.stats-box {background-color: #202123; padding: 15px; border-radius: 8px; font-family: monospace; border: 1px solid #565869;}
+label, h2, h3 {color: #ececf1 !important;}
+.stats-box {background-color: #202123; padding: 15px; border-radius: 8px; color: #ececf1 !important; font-family: monospace; border: 1px solid #565869;}
+.message-wrap p {color: #111827 !important; font-size: 15px; font-weight: 500;} 
 """
 
 def user_action(user_message, history):
@@ -30,6 +30,13 @@ def user_action(user_message, history):
     
     return "", hf + [[user_message, None]]
 
+def extract_text(content):
+    if isinstance(content, str):
+        return content
+    elif isinstance(content, list):
+        return "".join(part.get("text", "") for part in content if isinstance(part, dict) and part.get("type", "") == "text")
+    return str(content)
+
 def bot_action(history, max_tokens, temperature, k_bits, group_size):
     if not history:
         yield history, "<div class='stats-box'>Waiting for generation...</div>"
@@ -38,15 +45,15 @@ def bot_action(history, max_tokens, temperature, k_bits, group_size):
     messages = []
     for m in history[:-1]:
         if isinstance(m, dict):
-            if m.get("content"): messages.append({"role": m["role"], "content": m["content"]})
+            text_content = extract_text(m.get("content", ""))
+            if text_content: messages.append({"role": m.get("role", "user"), "content": text_content})
         else:
-            if m[0]: messages.append({"role": "user", "content": m[0]})
-            if m[1]: messages.append({"role": "assistant", "content": m[1]})
+            if m[0]: messages.append({"role": "user", "content": extract_text(m[0])})
+            if m[1]: messages.append({"role": "assistant", "content": extract_text(m[1])})
             
     # Safely get last user message
     last_item = history[-1]
-    last_user_msg = last_item["content"] if isinstance(last_item, dict) else last_item[0]
-    
+    last_user_msg = extract_text(last_item.get("content", "")) if isinstance(last_item, dict) else extract_text(last_item[0])
     messages.append({"role": "user", "content": last_user_msg})
     
     prompt = tokenizer.apply_chat_template(
