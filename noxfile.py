@@ -34,6 +34,7 @@ def tests_mlx(session: nox.Session) -> None:
         "--cov-report=term-missing",
         "tests/unit/",
         "tests/integration/",
+        "tests/integration_mlx/",
         *session.posargs,
     )
 
