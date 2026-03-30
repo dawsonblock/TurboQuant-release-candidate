@@ -22,6 +22,11 @@ label, p, h2, h3, span {color: #ececf1 !important;}
 
 def user_action(user_message, history):
     hf = history or []
+    is_v5_plus = int(getattr(gr, "__version__", "0").split(".")[0]) >= 5
+    
+    if is_v5_plus:
+        return "", hf + [{"role": "user", "content": user_message}]
+    
     return "", hf + [[user_message, None]]
 
 def bot_action(history, max_tokens, temperature, k_bits, group_size):
@@ -31,16 +36,27 @@ def bot_action(history, max_tokens, temperature, k_bits, group_size):
         
     messages = []
     for m in history[:-1]:
-        if m[0]: messages.append({"role": "user", "content": m[0]})
-        if m[1]: messages.append({"role": "assistant", "content": m[1]})
-        
-    messages.append({"role": "user", "content": history[-1][0]})
+        if isinstance(m, dict):
+            if m.get("content"): messages.append({"role": m["role"], "content": m["content"]})
+        else:
+            if m[0]: messages.append({"role": "user", "content": m[0]})
+            if m[1]: messages.append({"role": "assistant", "content": m[1]})
+            
+    # Safely get last user message
+    last_item = history[-1]
+    last_user_msg = last_item["content"] if isinstance(last_item, dict) else last_item[0]
+    
+    messages.append({"role": "user", "content": last_user_msg})
     
     prompt = tokenizer.apply_chat_template(
         messages, tokenize=False, add_generation_prompt=True
     )
     
-    history[-1] = [history[-1][0], ""]
+    is_dict_format = isinstance(history[-1], dict)
+    if is_dict_format:
+        history.append({"role": "assistant", "content": ""})
+    else:
+        history[-1] = [last_user_msg, ""]
     
     generator = stream_generate(
         model, 
@@ -58,7 +74,12 @@ def bot_action(history, max_tokens, temperature, k_bits, group_size):
     
     for response in generator:
         if response.text:
-            history[-1][1] += response.text
+            if is_dict_format:
+                history[-1]["content"] += response.text
+            else:
+                # Need to replace the tuple/list since tuples are immutable, lists are fine
+                history[-1] = [history[-1][0], history[-1][1] + response.text]
+                
             tokens += 1
             elapsed = time.time() - start_time
             tps = tokens / elapsed if elapsed > 0 else 0
