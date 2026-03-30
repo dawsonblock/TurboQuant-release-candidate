@@ -201,3 +201,9 @@ The V component is analogous.  At 3-bit K + 4-bit V with group=64 and float16 sc
 ## 7. Validation boundary
 
 This repository now includes packaging metadata and public static CI, but that CI does not certify MLX runtime behavior. Real runtime validation still requires an Apple Silicon Mac with `mlx` installed. Use `scripts/validate_apple_silicon.sh` for the supported local validation path.
+
+## 8. Experimental & Native Acceleration
+TurboQuant utilizes two layers of native compiled acceleration to minimize framework overhead over stream extraction pipelines:
+- **MLX JIT Core Compilation**: Fallback stream topologies (`dequantize_groups`, `decode_k_fallback`) aggressively compile inline Python iterators directly into static C++ execution trees (`mx.compile(fn, shapeless=False)`). Configuration constants (e.g., bit-widths, padding sizes) are aggressively injected at the compilation cache layer `_DEQUANT_CACHE[key]` effectively stripping dispatch latency.
+- **Metal Shader Injection** (`TQ_USE_METAL=1`): Raw logic is ported directly to Apple Silicon via explicit `mx.fast.metal_kernel` C++ templates (`decode_k.metal`). Heavy inner accumulation loops (`resid_idx` matches) are natively untrolled utilizing statically mapped compilation signatures `[("BITS", config.k_bits)]`.
+
