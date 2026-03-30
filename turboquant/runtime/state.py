@@ -22,9 +22,12 @@ Changelog
 ---------
 1  initial  – keys: schema_version, offset, d_head, d_pad, v_dim, v_pad,
               k_packed, k_scales, resid_vals, resid_idx, v_packed, v_scales
-2  current  – adds config fingerprint and optional calibrated quantizer scales
-              so restores can fail closed on config drift and preserve future
-              encode behavior after restore.
+2  current  – stores 11 per-field config keys (k_bits … eps) alongside the
+              tensor data.  ``_expect_config_match()`` compares each stored
+              value against the live ``TurboQuantConfig`` on restore and
+              raises ``TurboQuantStateError`` on any mismatch, preventing
+              silent encode-behavior drift.  Also adds optional
+              ``k_calibrated_scales`` / ``v_calibrated_scales`` arrays.
 """
 
 _SUPPORTED_VERSIONS = frozenset({1, 2})

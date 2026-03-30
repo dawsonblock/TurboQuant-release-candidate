@@ -10,16 +10,20 @@ calibrate                 — calibration pass over representative data
 """
 
 from turboquant.config import TurboQuantConfig
+from turboquant._deps import has_mlx, is_apple_silicon, require_mlx  # noqa: F401
 
 # Lazy imports for MLX-dependent runtime symbols
 def __getattr__(name: str):
     if name == "calibrate":
+        require_mlx("calibrate()")
         from turboquant.calibration.fit_quantizer import calibrate
         return calibrate
     elif name == "TurboQuantPipeline":
+        require_mlx("TurboQuantPipeline")
         from turboquant.core.pipeline import TurboQuantPipeline
         return TurboQuantPipeline
     elif name == "KVCompressor":
+        require_mlx("KVCompressor")
         from turboquant.runtime.kv_interface import KVCompressor
         return KVCompressor
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

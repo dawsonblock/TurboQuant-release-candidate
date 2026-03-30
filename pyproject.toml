@@ -8,7 +8,7 @@ version = "0.2.2"
 description = "Research-grade KV-cache compression for Apple Silicon MLX LLMs"
 readme = "README.md"
 requires-python = ">=3.9"
-license = {text = "MIT"}
+license = "MIT"
 authors = [{name = "Dawson Block"}]
 keywords = ["kv-cache", "compression", "mlx", "llm", "apple-silicon"]
 classifiers = [

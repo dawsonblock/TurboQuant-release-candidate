@@ -1,7 +1,7 @@
 PYTHON ?= python3
 PIP ?= uv pip
 
-.PHONY: help install-dev install-apple compile lint typecheck test test-unit test-integration static-check build-dist validate-local clean
+.PHONY: help install-dev install-apple compile lint typecheck test test-static test-mlx build-dist validate-apple clean
 
 help:
 	@printf "Targets:\n"
@@ -10,12 +10,11 @@ help:
 	@printf "  compile           Compile all source and test modules\n"
 	@printf "  lint              Run Ruff linting and formatting via Nox\n"
 	@printf "  typecheck         Run Mypy type validation via Nox\n"
-	@printf "  test              Run unit tests locally (or across Python matrix implicitly)\n"
-	@printf "  test-unit         Same as test\n"
-	@printf "  test-integration  Run integration tests (requires MLX)\n"
-	@printf "  static-check      Run linting, typechecking, and preflight script\n"
+	@printf "  test              Alias for test-static (safe on any platform)\n"
+	@printf "  test-static       Run static unit tests (no MLX required)\n"
+	@printf "  test-mlx          Run MLX-dependent tests (Apple Silicon only)\n"
 	@printf "  build-dist        Build wheel and sdist\n"
-	@printf "  validate-local    Run Apple Silicon runtime validation script\n"
+	@printf "  validate-apple    Run Apple Silicon runtime validation script\n"
 	@printf "  clean             Remove build artifacts\n"
 
 install-dev:
@@ -33,22 +32,18 @@ lint:
 typecheck:
 	nox -s typecheck
 
-test:
-	nox -s tests
+test: test-static
 
-test-unit:
-	nox -s tests -- tests/unit/
+test-static:
+	nox -s tests_static
 
-test-integration:
-	pytest tests/integration/
-
-static-check: lint typecheck
-	$(PYTHON) scripts/preflight.py
+test-mlx:
+	nox -s tests_mlx
 
 build-dist:
 	$(PYTHON) -m build
 
-validate-local:
+validate-apple:
 	./scripts/validate_apple_silicon.sh
 
 clean:
