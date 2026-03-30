@@ -5,7 +5,7 @@
 **Research-grade KV-cache compression for Apple Silicon MLX LLMs**
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue)](https://python.org)
-[![MLX](https://img.shields.io/badge/MLX-0.30.0%2B-orange)](https://github.com/ml-explore/mlx)
+[![MLX](https://img.shields.io/badge/MLX-0.22.0%2B-orange)](https://github.com/ml-explore/mlx)
 [![Platform](https://img.shields.io/badge/platform-Apple%20Silicon-black)](https://apple.com/mac)
 
 *3-bit keys · 4-bit values · deterministic rotation · top-k sparse residual · no numpy in the hot path*
@@ -169,25 +169,48 @@ cache = TurboQuantKCache(
 
 ## Running tests
 
-## Running tests
-
 ```bash
 # Static tests — safe on any platform (no MLX needed)
 make test-static
 
 # MLX-dependent tests — Apple Silicon only
 make test-mlx
+
+# Structural integration tests (no model weights, ~1 second)
+make test-structural
+
+# Path-proof tests (verify TQ path is active, not silent dense fallback)
+make test-path-proof
 ```
 
-## Local runtime validation
+### Model-weight tests
 
-For real MLX runtime certification on Apple Silicon, run:
+Some tests require real model weights. Set these environment variables:
 
 ```bash
-./scripts/validate_apple_silicon.sh
+# Any small Llama-family HF model (e.g. TinyLlama/TinyLlama-1.1B-Chat-v1.0)
+export TQ_TEST_LLAMA_MODEL="TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+
+# Any small Gemma-family HF model (e.g. google/gemma-2b)
+export TQ_TEST_GEMMA_MODEL="google/gemma-2b"
+
+# Run the model-dependent tests
+python -m pytest tests/integration_mlx/ -v --tb=short
 ```
 
-Public CI only checks packaging and syntax. It does not certify MLX runtime behavior. See [docs/validation-local.md](docs/validation-local.md).
+Without these variables, model-dependent tests are automatically skipped.
+
+### Full runtime certification
+
+```bash
+# Structural certification only (no weights needed)
+make certify-structural
+
+# Full certification (requires TQ_TEST_LLAMA_MODEL / TQ_TEST_GEMMA_MODEL)
+make certify-apple-runtime
+```
+
+See [docs/validation-local.md](docs/validation-local.md) for details.
 
 ---
 
@@ -331,6 +354,13 @@ docs/
 | Llama streaming attention | ✅ wired |
 | `upgrade_cache_list` cache upgrade API | ✅ canonical, idempotent |
 | Eval suite (perplexity / KL drift / memory) | ✅ `turboquant.eval` |
+| Quality gates (Δppl ≤ 0.5, mean_kl ≤ 0.1) | ✅ `run_quality_eval.py` |
+| MLX version bounds (`[0.22.0, 1.0.0)`) | ✅ enforced at import |
+| Structured logging (`turboquant.*`) | ✅ 6 modules |
+| NaN/overflow guards | ✅ encode + attention |
+| Path-proof tests (no silent dense fallback) | ✅ 9 tests |
+| Deterministic benchmarks (seeded) | ✅ `mx.random.seed()` |
+| Apple runtime CI | ✅ `.github/workflows/` |
 | Benchmarks (memory / latency / streaming) | ✅ `benchmarks/` |
 | Architecture + integration docs | ✅ `docs/` |
 | Other architectures (Mistral, Phi, …) | ⬜ needs per-arch patch |
@@ -341,7 +371,7 @@ docs/
 
 ## Limitations
 
-- **Quality unmeasured** — compression ratio is real; perplexity impact at scale has not been benchmarked. Use `turboquant.eval.perplexity_report` and `drift_report` to measure on your data.
+- **Quality gated but not yet measured at scale** — `run_quality_eval.py` enforces Δppl ≤ 0.5 and mean_kl ≤ 0.1 gates. Run `make certify-apple-runtime` with model weights to validate.
 - **Gemma + Llama wired** — `turboquant_streaming_attention` is dispatched in both. Adding a new architecture is a [one-function change](docs/integration.md#adding-a-new-model-family).
 - **Kernel optimization in progress** — custom Metal kernel integration remains experimental and is not part of the supported default runtime yet.
 - **Hadamard is O(d²)** — not a fast butterfly transform. For very large head-dims, `rotation="identity"` is faster with marginally worse compression.
@@ -365,8 +395,8 @@ docs/
 |---|---|
 | Platform | macOS · Apple Silicon (M1 / M2 / M3 / M4) |
 | Python | ≥ 3.9 |
-| MLX | ≥ 0.30.0 |
-| mlx-lm | ≥ 0.30.0 |
+| MLX | ≥ 0.22.0, < 1.0.0 |
+| mlx-lm | vendored v0.29.1 (see [VENDORED_MLX_LM.md](VENDORED_MLX_LM.md)) |
 
 ---
 
