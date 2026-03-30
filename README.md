@@ -334,7 +334,7 @@ docs/
 | Benchmarks (memory / latency / streaming) | ✅ `benchmarks/` |
 | Architecture + integration docs | ✅ `docs/` |
 | Other architectures (Mistral, Phi, …) | ⬜ needs per-arch patch |
-| Fused Metal kernel (decode & dequant) | ⬜ experimental integration in progress |
+| Fused Metal kernel (decode & dequant) | ⬜ experimental, not in default runtime |
 | Perplexity / quality benchmarks at scale | ⬜ not yet measured |
 
 ---
