@@ -10,7 +10,7 @@
 `KVCompressor.state()` returns a Python dict with the following keys:
 
 | key | type | description |
-|---|---|---|
+| --- | --- | --- |
 | `schema_version` | `int` | always `2` |
 | `offset` | `int` | number of tokens stored |
 | `d_head` | `int` | original (un-padded) head dimension |
@@ -29,30 +29,27 @@
 K codes are packed into uint32 words.  For `k_bits = b` and (padded) head
 dimension `d_pad`:
 
-```
+```text
 codes_per_word = floor(32 / b)
 n_words        = ceil(d_pad / codes_per_word)
 k_packed.shape = [B, H, T, n_words]
-```
-
+```text
 Each uint32 stores `codes_per_word` b-bit unsigned integers in the **low bits
 first** order:
 
-```
+```text
 word = code[0] | (code[1] << b) | (code[2] << 2b) | ...
-```
-
+```text
 Unpacking extracts each code as `(word >> (i * b)) & ((1 << b) - 1)`.
 
 ### Scale format
 
 One scale per group:
 
-```
+```text
 n_groups      = ceil(d_pad / group_size)
 k_scales.shape = [B, H, T, n_groups]
-```
-
+```text
 Dequantisation: `x_float = (code - zero) * scale`  where `zero = (1 << b) / 2`
 (symmetric unsigned-to-signed mapping).
 
@@ -65,8 +62,7 @@ with checkpoints written before schema v2:
 
 ```python
 (k_codes, k_scales, None, None, None, v_codes, v_scales)
-```
-
+```text
 Indices 2–4 (residual sign-sketch fields) are always `None` in the production
 path.  `TurboQuantKCache.from_state(state, meta_state)` accepts this 7-tuple
 plus a 18-element string tuple (`meta_state`) that encodes all config fields as
@@ -74,7 +70,7 @@ strings.
 
 ### meta_state tuple layout
 
-```
+```text
 index  field
 0      offset (str int)
 1      d_head (str int)
@@ -94,8 +90,7 @@ index  field
 15     v_enabled ("1" | "0")
 16     block_tokens
 17     state_version (str "2")
-```
-
+```text
 ---
 
 ## 3. State validation
@@ -132,4 +127,4 @@ mx.savez("kv_state.npz", **{k: v for k, v in state.items()
 # Restore
 restored = KVCompressor.from_state(state, cfg)
 assert restored.offset == comp.offset
-```
+```text

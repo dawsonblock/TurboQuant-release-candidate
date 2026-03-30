@@ -13,7 +13,7 @@ decompressing on-the-fly during attention.  The goal is to cut memory
 bandwidth at decode time on Apple Silicon (MLX backend) while preserving
 model quality.
 
-```
+```text
 Input token
      │
      ▼
@@ -36,13 +36,12 @@ Input token
 │                      ▼                         │
 │                   Output                       │
 └────────────────────────────────────────────────┘
-```
-
+```text
 ---
 
 ## 2. Package structure
 
-```
+```text
 turboquant/
 ├── config.py               # TurboQuantConfig dataclass (production schema)
 ├── core/
@@ -60,9 +59,8 @@ turboquant/
 │   ├── generation_drift.py
 │   └── memory.py
 └── tests/                  # compat stub (canonical tests live in tests/unit/)
-```
-
-```
+```text
+```text
 mlx_lm/
 ├── models/
 │   ├── cache.py            # KVCache, TurboQuantKCache (adapter), helpers
@@ -70,8 +68,7 @@ mlx_lm/
 ├── generate.py             # generate_step
 └── upgrade.py              # (in integrations/mlx) canonical upgrade entry point
 
-```
-
+```text
 ---
 
 ## 3. Key components
@@ -158,7 +155,7 @@ State dicts carry `schema_version: 2`.  `validate_state(state, config)` checks:
 
 ## 4. Data flow: one decode step
 
-```
+```text
 q [B, H_q, 1, d]    k [B, H_kv, 1, d]    v [B, H_kv, 1, d]
         │                    │                    │
         │            KVCompressor.update_and_fetch(k, v)
@@ -180,8 +177,7 @@ q [B, H_q, 1, d]    k [B, H_kv, 1, d]    v [B, H_kv, 1, d]
                    └───────────────────┘
                              │
                           output [B, H_q, 1, d]
-```
-
+```text
 ---
 
 ## 5. Memory model

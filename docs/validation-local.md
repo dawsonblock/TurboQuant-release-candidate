@@ -6,8 +6,7 @@ Use the local script below on an Apple Silicon Mac for real runtime validation:
 
 ```bash
 ./scripts/validate_apple_silicon.sh
-```
-
+```text
 That script:
 
 - creates a fresh virtualenv
@@ -23,4 +22,4 @@ You can also invoke the same paths through the Makefile:
 ```bash
 make static-check
 make validate-local
-```
+```text

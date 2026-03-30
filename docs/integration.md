@@ -31,8 +31,7 @@ cache = make_prompt_cache(model)
 cfg = TurboQuantConfig(k_bits=3, k_group_size=64, rotation="hadamard")
 events = upgrade_cache_list(cache, k_start=64, config=cfg)
 # decode loop continues with TurboQuant cache
-```
-
+```text
 `upgrade_cache_list` returns a list of `CacheUpgradeEvent` objects (one per
 layer) with `upgraded`, `layer_index`, `old_type`, `new_type`, `offset_at_upgrade`.
 
@@ -53,8 +52,7 @@ Add these imports to your model file:
 ```python
 from turboquant.runtime.attention import turboquant_streaming_attention
 from turboquant.runtime.kv_interface import TurboQuantKeysView
-```
-
+```text
 ### Step 2 — dispatch inside attention `__call__`
 
 Replace the attention call with:
@@ -77,8 +75,7 @@ def __call__(self, x, mask=None, cache=None):
         attn_out = ...
 
     return self.o_proj(attn_out)
-```
-
+```text
 ### Gemma example
 
 `mlx_lm/models/gemma.py` is the reference implementation.  Search for
@@ -135,4 +132,4 @@ pytest tests/integration/
 
 # Full suite
 pytest tests/
-```
+```text

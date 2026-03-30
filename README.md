@@ -24,11 +24,10 @@ TurboQuant compresses the KV cache of transformer models running on Apple Silico
 > Do not treat the memory/latency numbers as production benchmarks.
 > Supported surface is documented in [docs/supported-surface.md](docs/supported-surface.md). Release gating is documented in [docs/release-checklist.md](docs/release-checklist.md).
 
-```
+```text
 Dense KV cache (fp16, 1K tokens, 2 heads, head_dim=128)   1024 KB
 TurboQuant (3-bit K + 4-bit V, group=64)                   ~252 KB   ▸ ~4× smaller
-```
-
+```text
 | | Dense | TurboQuant |
 |---|:---:|:---:|
 | K storage | fp16 | **3-bit** + per-group scale + sparse residual |
@@ -44,7 +43,7 @@ TurboQuant (3-bit K + 4-bit V, group=64)                   ~252 KB   ▸ ~4× sm
 
 ## How it works
 
-```
+```text
                        K  path
 ┌──────────┐    ┌───────────────┐    ┌──────────────────────┐    ┌────────┐
 │ raw keys │───▶│ FixedRotation   │───▶│ GroupScalarQuantizer │───▶│  packed  │
@@ -66,8 +65,7 @@ TurboQuant (3-bit K + 4-bit V, group=64)                   ~252 KB   ▸ ~4× sm
 Decode K (streaming attention)
   packed_codes ──▶ dequant ──▶ + topk_residual ──▶ crop ──▶ [B,H,T,D]
   (queries are rotated with the same FixedRotation before the matmul)
-```
-
+```text
 **Key design choices:**
 - **Hadamard-family whitening** — exact dense Hadamard matrix for power-of-two head dims, or a deterministic Hadamard-derived orthogonal fallback otherwise; the rotation equalises per-dimension variance while preserving `R.T @ R = I`. *Not* a fast butterfly transform — cost is O(d²) per token.
 - **Top-k sparse residual** — stores the k=2 largest-magnitude quantisation errors per group (fp16 value + uint8 index); recovers the dominant signal the main quantiser misses
@@ -83,8 +81,7 @@ Decode K (streaming attention)
 git clone https://github.com/dawsonblock/TurboQuant
 cd TurboQuant
 python -m pip install -e '.[apple]'
-```
-
+```text
 `mlx` only installs on Apple Silicon. On non-Apple runners, use the packaging and syntax checks only.
 
 ---
@@ -107,8 +104,7 @@ q_rot       = cache.rotate_queries(queries)          # rotate Q into K's frame
 for start, end, k_blk, v_blk in cache.iter_rotated_kv_blocks(view):
     # standard online-softmax attention over (q_rot, k_blk, v_blk)
     ...
-```
-
+```text
 ### Wiring into mlx-lm generation
 
 ```python
@@ -122,8 +118,7 @@ cache = make_prompt_cache(model)
 cfg    = TurboQuantConfig(k_bits=3, k_group_size=64, rotation="hadamard")
 events = upgrade_cache_list(cache, k_start=64, config=cfg)
 # decode loop continues with TurboQuant cache
-```
-
+```text
 ### Optional: offline calibration
 
 ```python
@@ -137,8 +132,7 @@ calibrate(
     max_batches=64,
 )
 # pipeline now uses fitted per-group scales → lower quantisation error
-```
-
+```text
 ### Tune the config
 
 ```python
@@ -149,8 +143,7 @@ config = TurboQuantConfig(
     rotation_seed=1337,
     v_enabled=False,                   # disable V compression if headroom exists
 )
-```
-
+```text
 ### Legacy mlx-lm cache
 
 `turboquant_return_mode` and `turboquant_resid_scale_bits` remain in the legacy shim for backward compatibility, but the production upgrade path ignores them. Real residual behavior is controlled by `residual_topk`.
@@ -163,8 +156,7 @@ cache = TurboQuantKCache(
     TurboQuantConfig(main_bits=3, group_size=64, rotation="hadamard",
                      return_mode="view", v_bits=4, v_enabled=True)
 )
-```
-
+```text
 ---
 
 ## Running tests
@@ -178,16 +170,14 @@ pytest tests/unit/
 
 # Integration tests only  (mlx_lm + turboquant, 20 tests)
 pytest tests/integration/
-```
-
+```text
 ## Local runtime validation
 
 For real MLX runtime certification on Apple Silicon, run:
 
 ```bash
 ./scripts/validate_local.sh
-```
-
+```text
 Public CI only checks packaging and syntax. It does not certify MLX runtime behavior. See [docs/validation-local.md](docs/validation-local.md).
 
 ---
@@ -206,17 +196,15 @@ python benchmarks/bench_decode_streaming.py
 
 # Classic per-step latency
 python benchmarks/decode_latency.py
-```
-
+```text
 Sample output from `bench_memory_footprint.py`:
 
-```
+```text
 type                      bits  group  tokens   total_MB   bytes/tok   vs_dense
 dense (float16)             16     --    1024       2.10        2048       1.0×
 TurboQuant k=3b g=64         3     64    1024       0.52         512       4.0×
 TurboQuant k=2b g=64         2     64    1024       0.43         416       4.9×
-```
-
+```text
 ---
 
 ## Evaluation
@@ -238,15 +226,14 @@ drift = drift_report(model, input_ids, turboquant_config=cfg)
 # Cache memory comparison
 mem = memory_report(model, input_ids, turboquant_config=cfg)
 # → {'dense_cache_bytes': 2097152, 'tq_cache_bytes': 524288, 'ratio': 4.0}
-```
-
+```text
 See [docs/evaluation.md](docs/evaluation.md) for interpretation guidance.
 
 ---
 
 ## Memory breakdown
 
-```
+```text
 1024 tokens · 2 KV heads · head_dim=128
 
   k_packed           ~96 KB    3-bit packed uint32
@@ -257,13 +244,12 @@ See [docs/evaluation.md](docs/evaluation.md) for interpretation guidance.
   v_scales            8 KB    per-group fp16 scales
   ──────────────────────────
   total            ~252 KB    vs 1024 KB dense  (4.1× compression)
-```
-
+```text
 ---
 
 ## Project layout
 
-```
+```text
 turboquant/
 ├── config.py                  TurboQuantConfig — production schema
 ├── core/
@@ -308,8 +294,7 @@ docs/
 ├── cache-format.md            state dict schema v1, packed uint32 layout
 ├── integration.md             step-by-step model wiring guide
 └── evaluation.md              metrics, benchmark workflow, thresholds
-```
-
+```text
 ---
 
 ## Status
@@ -375,16 +360,15 @@ This project uses `nox` and `uv` to manage isolated build matrices and testing e
 First, ensure `uv` or `nox` is installed:
 ```bash
 pip install uv nox
-```
-
+```text
 To run the complete test suite across the supported Python versions (`3.9`, `3.10`, `3.11`, `3.12`) with `pytest-cov` reporting:
 ```bash
 nox -s tests
-```
+```text
 *(Note: Python 3.9 test targets omit `mlx` installation to bypass unsupported Apple Silicon wheels gracefully).*
 
 To run all static code analysis (formatting with `ruff` and type-checking with `mypy`):
 ```bash
 make static-check
 # Or natively: nox -s lint typecheck
-```
+```text

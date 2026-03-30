@@ -26,8 +26,7 @@ print(drift)
 mem = memory_report(model, input_ids, turboquant_config=cfg)
 print(mem)
 # {'dense_cache_bytes': 2097152, 'tq_cache_bytes': 524288, 'ratio': 4.0, 'n_layers': 18}
-```
-
+```text
 ---
 
 ## 2. Metrics
@@ -37,11 +36,10 @@ print(mem)
 **What it measures**: how well the TurboQuant model predicts the next token
 compared to a dense-cache baseline.
 
-```
+```text
 PPL = exp( mean NLL )
 delta_ppl = tq_ppl - dense_ppl
-```
-
+```text
 A `delta_ppl` below **0.5** is generally imperceptible in generation quality.
 Values above **2.0** indicate the bit-width is too aggressive for this sequence.
 
@@ -49,35 +47,31 @@ Values above **2.0** indicate the bit-width is too aggressive for this sequence.
 ```python
 perplexity_from_logits(logits, targets) -> float
 perplexity_report(model, input_ids, turboquant_config, k_start) -> dict
-```
-
+```text
 ### 2.2 Generation drift (`turboquant.eval.generation_drift`)
 
 **What it measures**: KL divergence between dense and TQ token distributions
 at each position.  Unlike perplexity, this does not require ground-truth
 targets — it compares the model's beliefs unconditionally.
 
-```
+```text
 KL(P_dense || P_tq) = sum_v P_dense(v) * (log P_dense(v) - log P_tq(v))
-```
-
+```text
 A `mean_kl` below **0.01** nats indicates negligible distribution shift.
 
 **API**:
 ```python
 logit_kl_divergence(logits_p, logits_q, temperature) -> mx.array  # [T]
 drift_report(model, input_ids, turboquant_config, k_start, temperature) -> dict
-```
-
+```text
 ### 2.3 Memory (`turboquant.eval.memory`)
 
 **What it measures**: total bytes consumed by the KV cache arrays after one
 forward pass.
 
-```
+```text
 ratio = dense_cache_bytes / tq_cache_bytes
-```
-
+```text
 A ratio of **4×** or higher is achievable with 3-bit K + 4-bit V at
 `group_size=64` for sequences longer than 512 tokens.
 
@@ -85,8 +79,7 @@ A ratio of **4×** or higher is achievable with 3-bit K + 4-bit V at
 ```python
 peak_memory_bytes(cache_list) -> int
 memory_report(model, input_ids, turboquant_config, k_start) -> dict
-```
-
+```text
 ---
 
 ## 3. Benchmarks
@@ -103,8 +96,7 @@ performance without a full model:
 Run any benchmark with:
 ```bash
 python benchmarks/<script>.py
-```
-
+```text
 ---
 
 ## 4. Recommended evaluation workflow
