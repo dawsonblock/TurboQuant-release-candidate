@@ -55,7 +55,8 @@ def decode_k_metal(
             ("GROUP_SIZE", config.k_group_size), 
             ("TOPK", config.residual_topk),
             ("N_GROUPS", n_groups),
-            ("N_WORDS", n_words)
+            ("N_WORDS", n_words),
+            ("D_HEAD", d_head)
         ],
         stream=mx.gpu
     )
