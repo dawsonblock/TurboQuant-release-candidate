@@ -53,7 +53,7 @@ if [ -z "${VIRTUAL_ENV:-}" ]; then
     VENV_DIR="$REPO_ROOT/.venv-cert"
     if [ ! -d "$VENV_DIR" ]; then
         echo "Creating certification venv at $VENV_DIR ..."
-        python3 -m venv "$VENV_DIR"
+        python3.11 -m venv "$VENV_DIR"
     fi
     # shellcheck disable=SC1091
     source "$VENV_DIR/bin/activate"
@@ -66,17 +66,17 @@ fi
 # Stage 1: Strict preflight
 # ---------------------------------------------------------------------------
 run_stage "Strict Preflight" \
-    python3 scripts/preflight.py --strict --json \
+    python3.11 scripts/preflight.py --strict --json \
     | tee "$ARTIFACT_DIR/preflight.json"
 
 # Also save a raw preflight artifact
-python3 scripts/preflight.py --strict --json > "$ARTIFACT_DIR/preflight.json" 2>&1 || true
+python3.11 scripts/preflight.py --strict --json > "$ARTIFACT_DIR/preflight.json" 2>&1 || true
 
 # ---------------------------------------------------------------------------
 # Stage 2: Cache upgrade roundtrip
 # ---------------------------------------------------------------------------
 run_stage "Cache Upgrade Roundtrip" \
-    python3 -m pytest -q --tb=short \
+    python3.11 -m pytest -q --tb=short \
     tests/integration_mlx/test_cache_upgrade_roundtrip.py \
     --junitxml="$ARTIFACT_DIR/junit_cache_roundtrip.xml"
 
@@ -84,7 +84,7 @@ run_stage "Cache Upgrade Roundtrip" \
 # Stage 3: Streaming attention equivalence
 # ---------------------------------------------------------------------------
 run_stage "Attention Equivalence" \
-    python3 -m pytest -q --tb=short \
+    python3.11 -m pytest -q --tb=short \
     tests/integration_mlx/test_streaming_attention_equivalence.py \
     --junitxml="$ARTIFACT_DIR/junit_attention_equiv.xml"
 
@@ -93,7 +93,7 @@ run_stage "Attention Equivalence" \
 # ---------------------------------------------------------------------------
 if [ -n "${TQ_TEST_LLAMA_MODEL:-}" ]; then
     run_stage "Llama Smoke" \
-        python3 -m pytest -q --tb=short \
+        python3.11 -m pytest -q --tb=short \
         tests/integration_mlx/test_llama_runtime_smoke.py \
         --junitxml="$ARTIFACT_DIR/junit_llama_smoke.xml"
 else
@@ -107,7 +107,7 @@ fi
 # ---------------------------------------------------------------------------
 if [ -n "${TQ_TEST_GEMMA_MODEL:-}" ]; then
     run_stage "Gemma Smoke" \
-        python3 -m pytest -q --tb=short \
+        python3.11 -m pytest -q --tb=short \
         tests/integration_mlx/test_gemma_runtime_smoke.py \
         --junitxml="$ARTIFACT_DIR/junit_gemma_smoke.xml"
 else
@@ -122,7 +122,7 @@ fi
 if [ -n "${TQ_TEST_LLAMA_MODEL:-}" ]; then
     for CLASS in short medium; do
         run_stage "Quality Eval $CLASS (Llama)" \
-            python3 benchmarks/runtime_cert/run_quality_eval.py \
+            python3.11 benchmarks/runtime_cert/run_quality_eval.py \
             --model "$TQ_TEST_LLAMA_MODEL" \
             --prompt-file "benchmarks/runtime_cert/prompts/$CLASS.jsonl" \
             --prompt-class "$CLASS" \
@@ -141,7 +141,7 @@ fi
 # Stage 6: Long-context stability
 # ---------------------------------------------------------------------------
 run_stage "Long-Context Stability" \
-    python3 -m pytest -q --tb=short \
+    python3.11 -m pytest -q --tb=short \
     tests/integration_mlx/test_long_context_stability.py \
     --junitxml="$ARTIFACT_DIR/junit_long_context.xml"
 
@@ -151,7 +151,7 @@ run_stage "Long-Context Stability" \
 if [ -n "${TQ_TEST_LLAMA_MODEL:-}" ]; then
     for CLASS in short medium long; do
         run_stage "Benchmark $CLASS (Llama)" \
-            python3 benchmarks/runtime_cert/run_dense_vs_tq.py \
+            python3.11 benchmarks/runtime_cert/run_dense_vs_tq.py \
             --model "$TQ_TEST_LLAMA_MODEL" \
             --prompt-file "benchmarks/runtime_cert/prompts/$CLASS.jsonl" \
             --prompt-class "$CLASS" \
@@ -165,7 +165,7 @@ fi
 if [ -n "${TQ_TEST_GEMMA_MODEL:-}" ]; then
     for CLASS in short medium long; do
         run_stage "Benchmark $CLASS (Gemma)" \
-            python3 benchmarks/runtime_cert/run_dense_vs_tq.py \
+            python3.11 benchmarks/runtime_cert/run_dense_vs_tq.py \
             --model "$TQ_TEST_GEMMA_MODEL" \
             --prompt-file "benchmarks/runtime_cert/prompts/$CLASS.jsonl" \
             --prompt-class "$CLASS" \
@@ -181,7 +181,7 @@ fi
 # ---------------------------------------------------------------------------
 if ls "$ARTIFACT_DIR"/*_dense.json "$ARTIFACT_DIR"/*_turboquant.json >/dev/null 2>&1; then
     run_stage "Metric Aggregation" \
-        python3 benchmarks/runtime_cert/collect_metrics.py \
+        python3.11 benchmarks/runtime_cert/collect_metrics.py \
         --input-dir "$ARTIFACT_DIR" \
         --output-dir "$ARTIFACT_DIR"
 else

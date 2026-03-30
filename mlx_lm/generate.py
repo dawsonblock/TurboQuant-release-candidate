@@ -304,7 +304,6 @@ def maybe_turboquant_k_cache(
     turboquant_main_bits,
     turboquant_group_size,
     turboquant_rotation,
-    turboquant_return_mode,
     turboquant_resid_scale_bits,
     turboquant_residual_topk,
     turboquant_v_bits,
@@ -327,20 +326,15 @@ def maybe_turboquant_k_cache(
         return
 
     # Map legacy kwarg names → production TurboQuantConfig.
-    # ``turboquant_return_mode`` and ``turboquant_resid_scale_bits`` no
     # longer affect the production path. Keep them in the signature for
     # compatibility, but warn when callers try to steer behavior through them.
-    if turboquant_return_mode not in (None, "view", "dequant"):
         warnings.warn(
-            "turboquant_return_mode is deprecated and ignored by the production "
             "upgrade path; TurboQuant cache upgrades always return view-mode "
             "state internally.",
             DeprecationWarning,
             stacklevel=2,
         )
-    elif turboquant_return_mode == "dequant":
         warnings.warn(
-            "turboquant_return_mode='dequant' is deprecated and ignored; the "
             "production upgrade path always uses view-mode state internally.",
             DeprecationWarning,
             stacklevel=2,
@@ -404,7 +398,6 @@ def generate_step(
     turboquant_main_bits: int = 3,
     turboquant_group_size: int = 64,
     turboquant_rotation: str = "identity",
-    turboquant_return_mode: str = "view",
     turboquant_resid_scale_bits: int = 8,
     turboquant_residual_topk: int = 2,
     turboquant_v_bits: int = 4,
@@ -481,7 +474,6 @@ def generate_step(
         turboquant_main_bits=turboquant_main_bits,
         turboquant_group_size=turboquant_group_size,
         turboquant_rotation=turboquant_rotation,
-        turboquant_return_mode=turboquant_return_mode,
         turboquant_resid_scale_bits=turboquant_resid_scale_bits,
         turboquant_residual_topk=turboquant_residual_topk,
         turboquant_v_bits=turboquant_v_bits,

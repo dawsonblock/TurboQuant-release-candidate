@@ -98,6 +98,20 @@ def summarize_metrics(records: list[dict]) -> dict:
 
     overall_pass = failed == 0
 
+    # Apply thresholds
+    MIN_MEMORY_REDUCTION_PCT = 25.0
+    MAX_SPEED_DEGRADATION_PCT = -25.0
+
+    for m in memory_deltas:
+        if m['reduction_pct'] < MIN_MEMORY_REDUCTION_PCT:
+            overall_pass = False
+            print(f"FAIL: Memory reduction {m['reduction_pct']}% < {MIN_MEMORY_REDUCTION_PCT}% for {m['model']}")
+
+    for s in speed_deltas:
+        if s['delta_pct'] < MAX_SPEED_DEGRADATION_PCT:
+            overall_pass = False
+            print(f"FAIL: Speed degradation {s['delta_pct']}% < {MAX_SPEED_DEGRADATION_PCT}% for {s['model']}")
+
     return {
         "total_runs": total,
         "passed": passed,

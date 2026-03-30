@@ -123,7 +123,6 @@ def run_single_generation(
         gen_kwargs["turboquant_v_group_size"] = 64
         gen_kwargs["turboquant_v_enabled"] = True
         gen_kwargs["turboquant_block_tokens"] = 256
-        gen_kwargs["turboquant_return_mode"] = "view"
 
     env = collect_environment_metadata(
         model=model_id,
@@ -143,13 +142,14 @@ def run_single_generation(
         t0 = time.perf_counter()
 
         first_token_time = None
+        sampler = (lambda x: mx.random.categorical(x * (1.0 / temperature))) if temperature > 0 else (lambda x: mx.argmax(x, axis=-1))
         for token, _ in generate_step(
-            prompt_tokens, model, temp=temperature, **gen_kwargs
+            prompt_tokens, model, sampler=sampler, **gen_kwargs
         ):
             if first_token_time is None:
                 first_token_time = time.perf_counter()
                 prefill_sec = first_token_time - t0
-            tokens_out.append(token.item())
+            tokens_out.append(int(token))
             if len(tokens_out) >= max_tokens:
                 break
 
@@ -158,6 +158,8 @@ def run_single_generation(
         output_text = tokenizer.decode(tokens_out)
 
     except Exception as exc:
+        import traceback; traceback.print_exc()
+
         status = "error"
         error_text = str(exc)
         total_sec = time.perf_counter() - t0

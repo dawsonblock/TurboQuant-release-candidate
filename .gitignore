@@ -47,3 +47,11 @@ fix_*.py
 test_scatter.py
 test_tq_run.py
 inspect_mx.py
+.venv*
+__pycache__
+artifacts/
+temp_out/
+cert_log.txt
+*.bak
+turboquant.egg-info/
+

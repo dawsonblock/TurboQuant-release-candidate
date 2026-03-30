@@ -141,45 +141,13 @@ Observed cosine ~0.97 for 3-bit K + 4-bit V with Hadamard rotation.
 - 100% of prompts complete without crash
 - No catastrophic degeneration on any prompt
 - Output length within tolerance of target
+- Perplexity delta (TQ - dense) ≤ 0.5
+- Mean KL divergence ≤ 0.1
 
 ### Performance
 
-- Measurable memory reduction in TurboQuant long-context mode
-- No evidence of catastrophic decode slowdown
-
----
-
-## Models covered
-
-The certification tests use whatever models are set in the environment
-variables. Recommended small models for fast certification:
-
-- **Llama**: `mlx-community/Llama-3.2-1B-Instruct-4bit`
-- **Gemma**: `mlx-community/gemma-2-2b-it-4bit`
-
----
-
-## Prompt files
-
-- [benchmarks/runtime_cert/prompts/short.jsonl](../benchmarks/runtime_cert/prompts/short.jsonl) — 5 short prompts
-- [benchmarks/runtime_cert/prompts/medium.jsonl](../benchmarks/runtime_cert/prompts/medium.jsonl) — 5 medium prompts
-- [benchmarks/runtime_cert/prompts/long.jsonl](../benchmarks/runtime_cert/prompts/long.jsonl) — 5 long prompts
-
----
-
-## Known limitations
-
-1. Memory measurement uses `resource.getrusage(RUSAGE_SELF)` which
-   reports process-level RSS, not per-cache memory.  The structural
-   `memory_breakdown()` test provides a more precise per-cache number.
-2. Thresholds are starting values and should be frozen after one pilot
-   run on the target hardware.
-3. Model smoke tests require downloading models from Hugging Face Hub
-   on first run.
-4. The certification script creates its own venv if not already in one;
-   ensure sufficient disk space.
-5. Long-context structural tests use synthetic data (no model download
-   required); model-based long-context tests require `TQ_TEST_LLAMA_MODEL`.
+- Measurable memory reduction in TurboQuant long-context mode (≥ 25.0%)
+- No evidence of catastrophic decode slowdown (degradation ≤ -25.0%)
 
 ---
 

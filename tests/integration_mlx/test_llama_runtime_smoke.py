@@ -70,7 +70,6 @@ def _generate_text(
         gen_kwargs["turboquant_v_group_size"] = 64
         gen_kwargs["turboquant_v_enabled"] = True
         gen_kwargs["turboquant_block_tokens"] = 256
-        gen_kwargs["turboquant_return_mode"] = "view"
 
     # Collect tokens
     tokens = []
@@ -78,7 +77,7 @@ def _generate_text(
     for token, logprobs in generate_step(
         prompt_tokens, model, sampler=make_sampler(temp=temp), **gen_kwargs
     ):
-        tokens.append(token.item())
+        tokens.append(int(token))
         if len(tokens) >= max_tokens:
             break
 

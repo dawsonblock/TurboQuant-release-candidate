@@ -205,9 +205,8 @@ class TestLongContextModelSmoke:
             turboquant_v_group_size=64,
             turboquant_v_enabled=True,
             turboquant_block_tokens=256,
-            turboquant_return_mode="view",
         ):
-            tokens.append(token.item())
+            tokens.append(int(token))
             if len(tokens) >= decode_settings["max_tokens"]:
                 break
 
