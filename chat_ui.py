@@ -22,7 +22,7 @@ label, p, h2, h3, span {color: #ececf1 !important;}
 
 def user_action(user_message, history):
     hf = history or []
-    return "", hf + [(user_message, None)]
+    return "", hf + [[user_message, None]]
 
 def bot_action(history, max_tokens, temperature, k_bits, group_size):
     if not history:
@@ -40,7 +40,7 @@ def bot_action(history, max_tokens, temperature, k_bits, group_size):
         messages, tokenize=False, add_generation_prompt=True
     )
     
-    history[-1] = (history[-1][0], "")
+    history[-1] = [history[-1][0], ""]
     
     generator = stream_generate(
         model, 
@@ -58,7 +58,7 @@ def bot_action(history, max_tokens, temperature, k_bits, group_size):
     
     for response in generator:
         if response.text:
-            history[-1] = (history[-1][0], history[-1][1] + response.text)
+            history[-1][1] += response.text
             tokens += 1
             elapsed = time.time() - start_time
             tps = tokens / elapsed if elapsed > 0 else 0
