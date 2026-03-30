@@ -4,6 +4,7 @@ import argparse
 import contextlib
 import functools
 import json
+import logging
 import sys
 import time
 import warnings
@@ -293,6 +294,10 @@ def maybe_quantize_kv_cache(prompt_cache, quantized_kv_start, kv_group_size, kv_
             prompt_cache[e] = c.to_quantized(group_size=kv_group_size, bits=kv_bits)
 
 
+_tq_logger = logging.getLogger("turboquant.generate")
+_tq_upgrade_logged = False  # module-level flag for one-shot confirmation
+
+
 def maybe_turboquant_k_cache(
     prompt_cache,
     turboquant_k_start,
@@ -360,6 +365,23 @@ def maybe_turboquant_k_cache(
         block_tokens=turboquant_block_tokens,
     )
     upgrade_cache_list(prompt_cache, k_start=turboquant_k_start, config=_cfg)
+
+    # One-shot confirmation that TQ path is active (logged once per process)
+    global _tq_upgrade_logged
+    if not _tq_upgrade_logged:
+        n_upgraded = sum(
+            1 for c in prompt_cache
+            if type(c).__name__ == "TurboQuantKCache"
+        )
+        if n_upgraded > 0:
+            _tq_logger.info(
+                "TurboQuant cache active: %d/%d layers upgraded "
+                "(k_bits=%d, rotation=%s, v_enabled=%s)",
+                n_upgraded, len(prompt_cache),
+                turboquant_main_bits, turboquant_rotation,
+                turboquant_v_enabled,
+            )
+            _tq_upgrade_logged = True
 
 
 def generate_step(

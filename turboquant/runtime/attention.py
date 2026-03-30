@@ -27,11 +27,14 @@ directly by model files.
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Callable
 
 import mlx.core as mx
 
 from turboquant.runtime.kv_interface import TurboQuantKeysView
+
+logger = logging.getLogger("turboquant.runtime.attention")
 
 # ── GQA broadcast ─────────────────────────────────────────────────────────────
 
@@ -154,7 +157,18 @@ def _streaming_softmax_attention(
         acc = mx.zeros((B, H_q, L_q, Dv), dtype=mx.float32)
         lse = mx.ones((B, H_q, L_q, 1), dtype=mx.float32)
 
-    return acc / mx.maximum(lse, mx.array(1e-6, dtype=lse.dtype))
+    out = acc / mx.maximum(lse, mx.array(1e-6, dtype=lse.dtype))
+
+    # NaN guard — detect collapsed or corrupted attention
+    if mx.any(mx.isnan(out)).item():  # type: ignore[union-attr]
+        logger.warning(
+            "NaN detected in streaming attention output "
+            "(view %d–%d, H_q=%d). Clamping to zero.",
+            keys_view.start, keys_view.end, H_q,
+        )
+        out = mx.where(mx.isnan(out), mx.zeros_like(out), out)
+
+    return out
 
 
 # ── Public streaming entry point ──────────────────────────────────────────────
@@ -235,5 +249,14 @@ def maybe_turboquant_attention(
     [B, H_q, L_q, Dv]
     """
     if isinstance(keys, TurboQuantKeysView):
+        logger.debug(
+            "attention dispatch: TurboQuant streaming path  "
+            "(view %d–%d, H_q=%d)",
+            keys.start, keys.end, queries.shape[1],
+        )
         return turboquant_streaming_attention(queries, keys, scale=scale)
+    logger.debug(
+        "attention dispatch: dense SDPA fallback  (H_q=%d, T_k=%d)",
+        queries.shape[1], keys.shape[2],
+    )
     return fallback(queries, keys, values, cache=cache, scale=scale, mask=mask)

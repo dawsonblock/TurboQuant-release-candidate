@@ -1,5 +1,6 @@
 # Copyright © 2023-2024 Apple Inc.
 
+import logging
 from dataclasses import dataclass
 from typing import Any, Optional, Union
 
@@ -12,6 +13,8 @@ from turboquant.runtime.kv_interface import TurboQuantKeysView
 from .base import BaseModelArgs, create_attention_mask, scaled_dot_product_attention
 from .cache import KVCache, RotatingKVCache
 from .rope_utils import initialize_rope
+
+logger = logging.getLogger("turboquant.models.llama")
 
 
 @dataclass
@@ -96,6 +99,10 @@ class Attention(nn.Module):
             keys = self.rope(keys)
 
         if isinstance(keys, TurboQuantKeysView):
+            logger.debug(
+                "llama attention: TurboQuant streaming path  "
+                "(view %d–%d)", keys.start, keys.end,
+            )
             output = turboquant_streaming_attention(
                 queries,
                 keys,

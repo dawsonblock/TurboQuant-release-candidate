@@ -1,5 +1,6 @@
 # Copyright © 2023-2024 Apple Inc.
 
+import logging
 from dataclasses import dataclass
 from typing import Any, Optional
 
@@ -10,6 +11,8 @@ from turboquant.runtime.attention import turboquant_streaming_attention
 from turboquant.runtime.kv_interface import TurboQuantKeysView
 
 from .base import BaseModelArgs, create_attention_mask, scaled_dot_product_attention
+
+logger = logging.getLogger("turboquant.models.gemma")
 
 
 @dataclass
@@ -83,6 +86,10 @@ class Attention(nn.Module):
             keys = self.rope(keys)
 
         if isinstance(keys, TurboQuantKeysView):
+            logger.debug(
+                "gemma attention: TurboQuant streaming path  "
+                "(view %d–%d)", keys.start, keys.end,
+            )
             output = turboquant_streaming_attention(
                 queries,
                 keys,

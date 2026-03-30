@@ -1,5 +1,6 @@
 # Copyright © 2023-2024 Apple Inc.
 
+import logging
 from typing import Any, Optional
 
 import mlx.core as mx
@@ -7,6 +8,8 @@ import mlx.nn as nn
 from mlx.utils import tree_flatten, tree_map, tree_unflatten
 
 from .base import create_causal_mask
+
+logger = logging.getLogger("turboquant.models.cache")
 
 
 def make_prompt_cache(
@@ -407,6 +410,11 @@ class KVCache(_BaseCache):
             keys = self.keys[..., : self.offset, :]
             values = self.values[..., : self.offset, :]
             tq.update_and_fetch(keys, values)
+        logger.debug(
+            "to_turboquant: upgraded layer with offset=%d  "
+            "(main_bits=%d, rotation=%s)",
+            self.offset, main_bits, rotation,
+        )
         return tq
 
     def make_mask(self, *args, **kwargs):

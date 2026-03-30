@@ -28,6 +28,7 @@ State
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterator
 from dataclasses import dataclass
 
@@ -36,8 +37,10 @@ import numpy as np
 
 from turboquant.config import TurboQuantConfig
 from turboquant.core.pipeline import TurboQuantPipeline
-from turboquant.errors import TurboQuantShapeError
+from turboquant.errors import TurboQuantKernelError, TurboQuantShapeError
 from turboquant.runtime.layout import ensure_layout
+
+logger = logging.getLogger("turboquant.runtime.kv_cache")
 
 # ── View type ─────────────────────────────────────────────────────────────────
 
@@ -257,6 +260,13 @@ class KVCompressor:
         # Encode K
         pk, ks, rv, ri = self.pipeline.encode_k(keys)
 
+        # NaN guard — detect corrupted encode output before it poisons the cache
+        if mx.any(mx.isnan(ks)).item():  # type: ignore[union-attr]
+            raise TurboQuantKernelError(
+                f"NaN detected in K scales after encode at offset {prev}–{prev+T}. "
+                "This indicates a numerical failure in the quantisation pipeline."
+            )
+
         # Store K
         self._k_packed[:, :, prev : prev + T, :] = pk  # type: ignore
         self._k_scales[:, :, prev : prev + T, :] = ks.astype(self._k_scales.dtype)  # type: ignore
@@ -281,6 +291,12 @@ class KVCompressor:
             end=self.offset,
             d_head=D,
             block_tokens=self.config.block_tokens,
+        )
+        logger.debug(
+            "update_and_fetch: offset=%d→%d  B=%d H=%d T=%d D=%d  "
+            "k_bits=%d v_enabled=%s  [TQ path active]",
+            prev, self.offset, B, H, T, D,
+            self.config.k_bits, self.config.v_enabled,
         )
         return view, values
 

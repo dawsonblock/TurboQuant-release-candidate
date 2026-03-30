@@ -10,7 +10,10 @@ calibrate                 — calibration pass over representative data
 """
 
 from turboquant.config import TurboQuantConfig
-from turboquant._deps import has_mlx, is_apple_silicon, require_mlx  # noqa: F401
+from turboquant._deps import has_mlx, is_apple_silicon, require_mlx, check_mlx_version  # noqa: F401
+
+# Validate MLX version bounds at import time (no-op if MLX is absent)
+check_mlx_version()
 
 # Lazy imports for MLX-dependent runtime symbols
 def __getattr__(name: str):
