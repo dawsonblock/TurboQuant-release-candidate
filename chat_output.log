@@ -1,0 +1,11 @@
+Loading mlx-community/Llama-3.2-1B-Instruct-4bit...
+Fetching 6 files:   0%|          | 0/6 [00:00<?, ?it/s]Fetching 6 files: 100%|██████████| 6/6 [00:00<00:00, 69711.42it/s]
+Traceback (most recent call last):
+  File "/Users/dawsonblock/Downloads/TurboQuant-release-candidate/chat_ui.py", line 108, in <module>
+    demo.launch(server_port=7860, css=css, theme=gr.themes.Monochrome())
+  File "/Users/dawsonblock/Downloads/TurboQuant-release-candidate/.venv-cert/lib/python3.11/site-packages/gradio/blocks.py", line 2750, in launch
+    ) = http_server.start_server(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/dawsonblock/Downloads/TurboQuant-release-candidate/.venv-cert/lib/python3.11/site-packages/gradio/http_server.py", line 182, in start_server
+    raise OSError(
+OSError: Cannot find empty port in range: 7860-7860. You can specify a different port by setting the GRADIO_SERVER_PORT environment variable or passing the `server_port` parameter to `launch()`.

@@ -1,6 +1,7 @@
 import mlx.core as mx
 from mlx_lm import load
 from mlx_lm.generate import stream_generate
+from mlx_lm.sample_utils import make_sampler
 import gradio as gr
 import os
 import time
@@ -58,12 +59,14 @@ def bot_action(history, max_tokens, temperature, k_bits, group_size):
     else:
         history[-1] = [last_user_msg, ""]
     
+    sampler = make_sampler(temp=float(temperature))
+    
     generator = stream_generate(
         model, 
         tokenizer, 
         prompt=prompt, 
         max_tokens=int(max_tokens), 
-        temp=float(temperature),
+        sampler=sampler,
         turboquant_k_start=0,
         turboquant_main_bits=int(k_bits),
         turboquant_group_size=int(group_size)
