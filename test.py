@@ -1,0 +1,1 @@
+import mlx.core as mx; k = mx.fast.metal_kernel('test', ['a'], ['b'], 'THIS_WILL_FAIL'); a = mx.zeros((1,)); k(inputs=[a], template=[], grid=(1,1,1), threadgroup=(1,1,1), output_shapes=[a.shape], output_dtypes=[mx.float32])

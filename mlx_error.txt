@@ -1,0 +1,25 @@
+mx.metal.device_info is deprecated and will be removed in a future version. Use mx.device_info instead.
+Traceback (most recent call last):
+  File "/Users/dawsonblock/Downloads/TurboQuant-release-candidate/benchmarks/run_final_eval.py", line 105, in <module>
+    measure_tq_attention(1, 1, 1, 128, 64)
+  File "/Users/dawsonblock/Downloads/TurboQuant-release-candidate/benchmarks/run_final_eval.py", line 68, in measure_tq_attention
+    out = turboquant_streaming_attention(q, keys_view, scale=(D**-0.5))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/dawsonblock/Downloads/TurboQuant-release-candidate/turboquant/runtime/attention.py", line 205, in turboquant_streaming_attention
+    return _streaming_softmax_attention(q_rot, keys_view, scale=scale).astype(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/dawsonblock/Downloads/TurboQuant-release-candidate/turboquant/runtime/attention.py", line 163, in _streaming_softmax_attention
+    if mx.any(mx.isnan(out)).item():  # type: ignore[union-attr]
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: [metal::Device] Unable to build metal library from source
+mlx/backend/metal/kernels/utils.h:455:1: error: redundant #include of module 'monolithic_metal' appears within function 'custom_kernel_decode_k' [-Wmodules-import-nested-redundant]
+#include <metal_stdlib>
+^
+mlx/backend/metal/kernels/utils.h:442:12: note: function 'custom_kernel_decode_k' begins here
+[[kernel]] void custom_kernel_decode_k(
+           ^
+mlx/backend/metal/kernels/utils.h:458:1: error: expected expression
+kernel void decode_k(
+^
+
+

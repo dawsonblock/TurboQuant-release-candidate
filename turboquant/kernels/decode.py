@@ -1,9 +1,11 @@
+import os
 from typing import Optional
 
 import mlx.core as mx
 
 from turboquant.core.quantizer import dequantize_groups
 from turboquant.core.residual import decode_topk_residual
+from turboquant.experimental.kernels.metal.runtime import decode_k_metal
 
 
 def decode_k_block(
@@ -18,6 +20,9 @@ def decode_k_block(
     Single entry point for all MLX-vectorized decode paths.
     Must return rotated K.
     """
+    if os.getenv("TQ_USE_METAL", "0") == "1" or getattr(config, "mode", "research") == "fast":
+        return decode_k_metal(packed_k, scales, resid_vals, resid_idx, config, d_head)
+    
     return decode_k_fallback(packed_k, scales, resid_vals, resid_idx, config, d_head)
 
 

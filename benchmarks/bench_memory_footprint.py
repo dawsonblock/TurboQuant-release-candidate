@@ -63,7 +63,7 @@ def _breakdown_row(cfg: TurboQuantConfig, T: int) -> dict:
     mx.eval(k, v)
     tq.update_and_fetch(k, v)
     mx.eval(tq.k_packed)
-    return tq.storage_breakdown()
+    return tq.memory_breakdown()
 
 
 def main():
