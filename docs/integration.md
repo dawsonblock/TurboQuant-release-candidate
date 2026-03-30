@@ -46,12 +46,13 @@ use `upgrade_cache_list` directly.
 
 ## 3. Attention dispatch
 
-### Step 1 — import the shared adapter
+### Step 1 — imports
 
-Add this import to your model file:
+Add these imports to your model file:
 
 ```python
-from turboquant.runtime.attention import maybe_turboquant_attention
+from turboquant.runtime.attention import turboquant_streaming_attention
+from turboquant.runtime.kv_interface import TurboQuantKeysView
 ```
 
 ### Step 2 — dispatch inside attention `__call__`
@@ -66,27 +67,22 @@ def __call__(self, x, mask=None, cache=None):
         k, v = cache.update_and_fetch(k, v)
 
     scale = self.scale   # or head_dim ** -0.5
-    attn_out = maybe_turboquant_attention(
-        q, k, v, mask, scale,
-        fallback=self._dense_attention,
-        cache=cache,
-    )
+    
+    if isinstance(k, TurboQuantKeysView):
+        attn_out = turboquant_streaming_attention(
+            q, k, v, mask=mask, scale=scale
+        )
+    else:
+        # your existing dense attention implementation
+        attn_out = ...
+
     return self.o_proj(attn_out)
-
-def _dense_attention(self, q, k, v, mask, scale):
-    # your existing dense attention implementation
-    ...
 ```
-
-`maybe_turboquant_attention` dispatches on `isinstance(k, TurboQuantKeysView)`:
-
-- **TurboQuant path**: calls `turboquant_streaming_attention(q, keys_view, scale=scale)`
-- **Dense path**: calls `fallback(q, k, v, mask, scale)`
 
 ### Gemma example
 
 `mlx_lm/models/gemma.py` is the reference implementation.  Search for
-`maybe_turboquant_attention` to see the exact wiring.
+`turboquant_streaming_attention` to see the exact wiring.
 
 ---
 
@@ -113,16 +109,16 @@ mapping automatically.
 
 ## 5. Llama wiring
 
-`mlx_lm/models/llama.py` wires `maybe_turboquant_attention` identically to
+`mlx_lm/models/llama.py` wires `turboquant_streaming_attention` identically to
 Gemma.  See `mlx_lm/models/llama.py` → `Attention.__call__`.
 
 ---
 
 ## 6. Adding a new model family
 
-1. Add `from turboquant.runtime.attention import maybe_turboquant_attention`
+1. Add `from turboquant.runtime.attention import turboquant_streaming_attention` and `from turboquant.runtime.kv_interface import TurboQuantKeysView`
 2. In `Attention.__call__`, replace the dense `scaled_dot_product_attention`
-   call with `maybe_turboquant_attention(..., fallback=self._dense_attention)`
+   call with a manual check for `isinstance(k, TurboQuantKeysView)` and call `turboquant_streaming_attention`.
 3. No changes to the cache object are needed — `TurboQuantKCache` is fully
    encapsulated.
 

@@ -1,11 +1,11 @@
 # TurboQuant Cache Format
 
-> **Schema version**: 1  
+> **Schema version**: 2  
 > **Defined in**: `turboquant/runtime/state.py`
 
 ---
 
-## 1. State dict (v1)
+## 1. State dict (v2)
 
 `KVCompressor.state()` returns a Python dict with the following keys:
 
@@ -61,7 +61,7 @@ Dequantisation: `x_float = (code - zero) * scale`  where `zero = (1 << b) / 2`
 ## 2. Legacy state (7-tuple)
 
 `TurboQuantKCache.state` (property) returns a 7-tuple for backward compatibility
-with checkpoints written before schema v1:
+with checkpoints written before schema v2:
 
 ```python
 (k_codes, k_scales, None, None, None, v_codes, v_scales)
@@ -69,7 +69,7 @@ with checkpoints written before schema v1:
 
 Indices 2–4 (residual sign-sketch fields) are always `None` in the production
 path.  `TurboQuantKCache.from_state(state, meta_state)` accepts this 7-tuple
-plus a 17-element string tuple (`meta_state`) that encodes all config fields as
+plus a 18-element string tuple (`meta_state`) that encodes all config fields as
 strings.
 
 ### meta_state tuple layout
@@ -93,6 +93,7 @@ index  field
 14     v_scale_dtype
 15     v_enabled ("1" | "0")
 16     block_tokens
+17     state_version (str "2")
 ```
 
 ---

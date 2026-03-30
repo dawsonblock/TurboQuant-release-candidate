@@ -110,7 +110,7 @@ The single implementation of KV quantisation.  Lifecycle:
    blocks; callers accumulate online-softmax accumulators
 4. `rotate_queries_for_attention(q)` — applies the same rotation as K so Q and
    K are in the same space
-5. `state()` / `from_state(state, config)` — serialise/restore (schema v1)
+5. `state()` / `from_state(state, config)` — serialise/restore (schema v2)
 6. `memory_breakdown()` — returns per-buffer byte counts + total
 7. `trim(n)` — decrease `offset` by n (for prompt trimming)
 

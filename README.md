@@ -20,7 +20,7 @@ TurboQuant compresses the KV cache of transformer models running on Apple Silico
 
 > **⚠️ Current status:** Serious prototype. Gemma and Llama families are wired.
 > Compression quality (perplexity impact) has **not** been measured at scale.
-> High-performance Metal kernel (`decode_k.metal`) integrated using `threadgroup` memory coalescing and `simdgroup` loops.
+> TurboQuant currently supports a narrow Apple-Silicon MLX runtime path for selected models, with package build and static validation available more broadly. Custom Metal kernel integration remains experimental and is not part of the supported default runtime.
 > Do not treat the memory/latency numbers as production benchmarks.
 > Supported surface is documented in [docs/supported-surface.md](docs/supported-surface.md). Release gating is documented in [docs/release-checklist.md](docs/release-checklist.md).
 

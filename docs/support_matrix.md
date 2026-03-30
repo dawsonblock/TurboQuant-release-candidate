@@ -2,8 +2,7 @@
 
 ## MLX Compatibility
 Tested against:
-- MLX 0.10.x
-- mlx_lm 0.10.x
+- MLX >= 0.30.0
 
 ## Hardware
 - Apple Silicon (M1/M2/M3) - Darwin arm64 natively supported.

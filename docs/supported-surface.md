@@ -22,7 +22,7 @@ What is **not** claimed by the current repository state:
 - Public CI runtime certification of MLX-backed generation
 - Production SLOs
 - Broad compatibility across every model in the vendored `mlx_lm/models/` tree
-- Fused Metal kernels for encoding (decode is fully optimized)
+- Fused Metal kernels for encoding or decoding (Metal kernel integration remains experimental and is not the default supported path)
 - Large-scale perplexity validation
 - Generic Linux or Windows runtime support
 

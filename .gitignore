@@ -39,3 +39,11 @@ htmlcov/
 # Editor
 .vscode/
 *.swp
+*.code-workspace
+
+# Scratch files
+Session
+fix_*.py
+test_scatter.py
+test_tq_run.py
+inspect_mx.py

@@ -4,7 +4,7 @@ import nox
 nox.options.default_venv_backend = "uv"
 
 # Global options
-nox.options.sessions = ["lint", "typecheck", "tests"]
+nox.options.sessions = ["lint", "typecheck", "tests_static"]
 nox.options.reuse_existing_virtualenvs = True
 
 # List of python versions to matrix test
@@ -12,13 +12,20 @@ PYTHON_VERSIONS = ["3.9", "3.10", "3.11"]
 
 
 @nox.session(python=PYTHON_VERSIONS)
-def tests(session: nox.Session) -> None:
-    """Run the test suite."""
-    # Install the package with test dependencies. MLX limits >=0.30.0 prevent python3.9.
-    if session.python == "3.9":
-        session.install(".[test]")
-    else:
-        session.install(".[test,apple]")
+def tests_static(session: nox.Session) -> None:
+    """Run generic static tests without MLX dependency."""
+    session.install(".[test]")
+
+    session.run(
+        "pytest",
+        "tests/unit_static/",
+        *session.posargs,
+    )
+
+@nox.session(python=PYTHON_VERSIONS)
+def tests_mlx(session: nox.Session) -> None:
+    """Run the test suite that requires MLX and Apple Silicon."""
+    session.install(".[test,apple]")
 
     # Run the tests using pytest with coverage
     session.run(
@@ -26,9 +33,9 @@ def tests(session: nox.Session) -> None:
         "--cov=turboquant",
         "--cov-report=term-missing",
         "tests/unit/",
+        "tests/integration/",
         *session.posargs,
     )
-
 
 @nox.session(python="3.11")  # Linting only needs to run on one version
 def lint(session: nox.Session) -> None:
