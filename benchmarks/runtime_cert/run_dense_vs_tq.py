@@ -105,6 +105,9 @@ def run_single_generation(
     import mlx.core as mx
     from mlx_lm.generate import generate_step
 
+    # Deterministic seeding — must precede every run for reproducibility
+    mx.random.seed(seed)
+
     prompt_tokens, prompt_len = _tokenize(tokenizer, prompt_text)
 
     gen_kwargs: dict = dict(max_tokens=max_tokens)
@@ -182,6 +185,8 @@ def run_single_generation(
         status=status,
         error=error_text,
         output_preview=output_text,
+        seed=seed,
+        temperature=temperature,
     )
 
 

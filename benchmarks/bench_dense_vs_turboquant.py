@@ -92,6 +92,7 @@ def _bench_encode(cache_factory, T: int) -> float:
 
 
 def main():
+    mx.random.seed(42)  # deterministic benchmark runs
     print("=== Dense vs TurboQuant: memory & encode latency ===\n")
     hdr = (
         f"{'config':30s}  {'tokens':>6}  "

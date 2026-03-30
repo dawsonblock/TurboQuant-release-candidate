@@ -232,6 +232,8 @@ RUN_CSV_FIELDS: list[str] = [
     "turboquant_active",
     "status",
     "error",
+    "seed",
+    "temperature",
 ]
 
 
@@ -255,6 +257,8 @@ def build_run_result(
     status: str,
     error: str | None = None,
     output_preview: str = "",
+    seed: int | None = None,
+    temperature: float | None = None,
 ) -> dict[str, Any]:
     """Construct a single-run artifact dict conforming to the certification schema."""
     return {
@@ -278,4 +282,6 @@ def build_run_result(
         "status": status,
         "error": error,
         "output_preview": output_preview[:200] if output_preview else "",
+        "seed": seed,
+        "temperature": temperature,
     }

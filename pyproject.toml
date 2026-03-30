@@ -32,7 +32,7 @@ dependencies = [
 
 [project.optional-dependencies]
 apple = [
-  "mlx>=0.30.0,<1.0.0; platform_system == 'Darwin' and platform_machine == 'arm64'",
+  "mlx>=0.22.0,<1.0.0; platform_system == 'Darwin' and platform_machine == 'arm64'",
 ]
 test = [
   "pytest>=8",

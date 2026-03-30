@@ -116,6 +116,27 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# Stage 5.5: Quality evaluation (perplexity + KL divergence)
+# ---------------------------------------------------------------------------
+if [ -n "${TQ_TEST_LLAMA_MODEL:-}" ]; then
+    for CLASS in short medium; do
+        run_stage "Quality Eval $CLASS (Llama)" \
+            python3 benchmarks/runtime_cert/run_quality_eval.py \
+            --model "$TQ_TEST_LLAMA_MODEL" \
+            --prompt-file "benchmarks/runtime_cert/prompts/$CLASS.jsonl" \
+            --prompt-class "$CLASS" \
+            --output-dir "$ARTIFACT_DIR" \
+            --max-delta-ppl 0.5 \
+            --max-mean-kl 0.1 \
+            --seed 42
+    done
+else
+    echo ""
+    echo "──── Stage: Quality Evaluation ────"
+    echo "  SKIPPED (TQ_TEST_LLAMA_MODEL not set)"
+fi
+
+# ---------------------------------------------------------------------------
 # Stage 6: Long-context stability
 # ---------------------------------------------------------------------------
 run_stage "Long-Context Stability" \
